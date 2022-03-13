@@ -19,7 +19,7 @@ namespace odfaeg {
                     PerPixelLinkedListBindlessPass1RenderComponent* perPixelLinkedListBindlessPass1 = new PerPixelLinkedListBindlessPass1RenderComponent(window);
                     perPixelLinkedListBindlessPass1->expression = expression;
                     GLuint maxNodes = 20 * window.getView().getSize().x * window.getView().getSize().y;
-                    GLint nodeSize = 5 * sizeof(GLfloat) + sizeof(GLuint) * 2;
+                    GLint nodeSize = 5 * sizeof(GLfloat) + sizeof(GLuint);
                     sf::Vector3i resolution = sf::Vector3i((int) window.getSize().x, (int) window.getSize().y, window.getView().getSize().z);
                     GLuint atomicBuffer, linkedListBuffer, headPtrTex, clearBuf;
                     glCheck(glGenBuffers(1, &atomicBuffer));
@@ -51,7 +51,7 @@ namespace odfaeg {
                                                             layout (location = 1) in vec4 color;
                                                             layout (location = 2) in vec2 texCoords;
                                                             layout (location = 3) in vec3 normals;
-                                                            layout (location = 4) in uvec3 infos;
+                                                            layout (location = 4) in uint textureIndex;
                                                             uniform mat4 textureMatrix[)"+core::conversionUIntString(Texture::getAllTextures().size())+R"(];
                                                             uniform mat4 projectionMatrix;
                                                             uniform mat4 viewMatrix;
@@ -59,13 +59,11 @@ namespace odfaeg {
                                                             out vec2 fTexCoords;
                                                             out vec4 frontColor;
                                                             out uint texIndex;
-                                                            out uint layer;
                                                             void main () {
                                                                 gl_Position = projectionMatrix * viewMatrix * vec4(position.xyz, 1.f);
                                                                 fTexCoords = (infos.x != 0) ? (textureMatrix[infos.x-1] * vec4(texCoords, 1.f, 1.f)).xy : texCoords;
                                                                 frontColor = color;
-                                                                texIndex = infos.x;
-                                                                layer = infos.y;
+                                                                texIndex = textureIndex;
                                                             })";
                     const std::string fragmentShader = R"(#version 460
                                                       #extension GL_ARB_bindless_texture : enable
@@ -73,7 +71,6 @@ namespace odfaeg {
                                                           vec4 color;
                                                           float depth;
                                                           uint next;
-                                                          uint layer;
                                                       };
                                                       layout(binding = 0, offset = 0) uniform atomic_uint nextNodeCounter;
                                                       layout(binding = 0, r32ui) uniform uimage2D headPointers;
@@ -89,7 +86,6 @@ namespace odfaeg {
                                                       in vec4 frontColor;
                                                       in vec2 fTexCoords;
                                                       in flat uint texIndex;
-                                                      in flat uint layer;
                                                       layout (location = 0) out vec4 fcolor;
                                                       void main() {
                                                            uint nodeIdx = atomicCounterIncrement(nextNodeCounter);
@@ -99,7 +95,6 @@ namespace odfaeg {
                                                                 nodes[nodeIdx].color = color;
                                                                 nodes[nodeIdx].depth = gl_FragCoord.z;
                                                                 nodes[nodeIdx].next = prevHead;
-                                                                nodes[nodeIdx].layer = layer;
                                                            }
                                                            fcolor = vec4(0, 0, 0, 0);
                                                       })";
@@ -167,7 +162,6 @@ namespace odfaeg {
                        vec4 color;
                        float depth;
                        uint next;
-                       uint layer;
                     };
                     layout(binding = 0, r32ui) uniform uimage2D headPointers;
                     layout(binding = 0, std430) buffer linkedLists {
@@ -187,7 +181,7 @@ namespace odfaeg {
                        //Insertion sort.
                        for (int i = 0; i < count - 1; i++) {
                          for (int j = i + 1; j > 0; j--) {
-                            if (frags[j-1].layer > frags[j].layer || frags[j-1].layer == frags[j].layer && frags[j - 1].depth > frags[j].depth) {
+                            if (frags[j - 1].depth > frags[j].depth) {
                                 NodeType tmp = frags[j - 1];
                                 frags[j - 1] = frags[j];
                                 frags[j] = tmp;

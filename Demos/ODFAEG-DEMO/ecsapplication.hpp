@@ -22,13 +22,15 @@ namespace sorrok {
             world.setCurrentScene(sceneId);
             odfaeg::graphic::ecs::EntityId tileId = factory.createEntity();
             auto eca2 = odfaeg::graphic::ecs::ModelFactory::createTileModel(*getWorld(), eca, factory, tileId, tm.getResourceByAlias("GRASS"), odfaeg::math::Vec3f(0, 0, 0), odfaeg::math::Vec3f(120, 60, 0),sf::IntRect(0, 0, 100, 50));
-            odfaeg::physic::BoundingBox mapZone(0, 0, 0, 1500, 1000, 0);
+
+            /*odfaeg::physic::BoundingBox mapZone(0, 0, 0, 1500, 1000, 0);
             std::vector<odfaeg::graphic::ecs::EntityId> tGround = {tileId};
             std::vector<odfaeg::graphic::ecs::EntityId> tWall;
-            getWorld()->generate_map<odfaeg::graphic::ecs::SceneGridComponent>(sa2, eca2, tGround, tWall, odfaeg::math::Vec2f(100, 50), mapZone);
+            getWorld()->generate_map<odfaeg::graphic::ecs::SceneGridComponent>(sa2, eca2, tGround, tWall, odfaeg::math::Vec2f(100, 50), mapZone);*/
             odfaeg::graphic::ecs::EntityId perPixelLinkedListRendererId = factory.createEntity();
-            odfaeg::graphic::ecs::ModelFactory::createPerPixelLinkedListBindlessRenderComponent(*getWorld(), factory, perPixelLinkedListRendererId, ra, getRenderWindow(), 0, "E_TILE");
-            exec(sya, sa2, ra, eca);
+            auto ra2 = odfaeg::graphic::ecs::ModelFactory::createPerPixelLinkedListBindlessRenderComponent(*getWorld(), factory, perPixelLinkedListRendererId, ra, getRenderWindow(), 0, "E_TILE");
+            getWorld()->addEntity(sa2, eca2, tileId);
+            exec(sya, sa2, ra2, eca2);
         }
         template <typename SystemArray, typename SceneArray, typename RendererArray, typename EntityComponentArray>
         void onRender(SystemArray& sya, SceneArray& sa, RendererArray& ra, EntityComponentArray& eca, odfaeg::graphic::RenderComponentManager *cm) {

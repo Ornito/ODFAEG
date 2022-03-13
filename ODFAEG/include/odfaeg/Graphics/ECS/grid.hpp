@@ -166,7 +166,7 @@ namespace odfaeg {
                     * \param cellHeight : the height of the cells.
                     * \param nbLayers : the depth of the cells.
                     */
-                    Grid (int cellWidth=0, int cellHeight=0, int cellDepth=0);
+                    Grid (int cellWidth=100, int cellHeight=50, int cellDepth=0);
                     /** \fn  ~GridMap ();
                     *   \brief destructor.
                     */
