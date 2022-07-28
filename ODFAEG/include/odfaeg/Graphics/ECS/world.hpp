@@ -27,7 +27,7 @@ namespace odfaeg {
                 std::vector<Cell*> getGridCases(SceneArray& sceneArray) {
                     return sceneMapping.getAgregate<SceneType>(sceneArray, currentSceneId)->gridMap.getGridCells();
                 }
-                template <typename SceneArray, typename EntityComponentArray, typename SceneType>
+                template <typename SceneType, typename SceneArray, typename EntityComponentArray>
                 bool addEntity(SceneArray& sceneArray, EntityComponentArray& entityComponentArray, EntityId entity) {
                     auto params = std::make_tuple(entityComponentArray, entityComponentMapping, entity);
                     std::vector<bool> addeds;

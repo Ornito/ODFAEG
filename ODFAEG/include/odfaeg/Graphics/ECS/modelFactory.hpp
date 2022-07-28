@@ -213,34 +213,8 @@ namespace odfaeg {
             }
             template <typename World, typename DynamicArray, typename Factory>
             static auto createTileModel(World& world, DynamicArray& da, Factory& factory, EntityId entity, const Texture *image, math::Vec3f position, math::Vec3f size, sf::IntRect subRect,  sf::Color color = sf::Color::White, Entity* parent = nullptr) {
-                TransformMatrix tm;
-                MeshComponent mesh;
-                auto da2 = world.addEntityComponentFlag(da, entity, mesh, factory);
-                VertexArray va(sf::Quads, 4);
-                Vertex v1(sf::Vector3f(0, 0, 0), color);
-                Vertex v2(sf::Vector3f(size.x, 0, 0), color);
-                Vertex v3(sf::Vector3f(size.x, size.y, 0), color);
-                Vertex v4(sf::Vector3f(0, size.y, 0), color);
-                v1.texCoords = sf::Vector2f(subRect.left, subRect.top);
-                v2.texCoords = sf::Vector2f(subRect.left + subRect.width, subRect.top);
-                v3.texCoords = sf::Vector2f(subRect.left + subRect.width, subRect.top + subRect.height);
-                v4.texCoords = sf::Vector2f(subRect.left, subRect.top + subRect.height);
-                //std::cout<<"tex coords : "<<v2.texCoords.x<<" "<<v2.texCoords.y<<std::endl;
-                //v1.color = v2.color = v3.color = v4.color = color;
-                va[0] = v1;
-                va[1] = v2;
-                va[2] = v3;
-                va[3] = v4;
-                Material material;
-                material.addTexture(nullptr, sf::IntRect(0, 0, 0, 0));
-
-                auto da3 = world.addEntityComponentFlag(da2, entity, mesh, factory);
-                ClonableComponent clonable;
-                auto da4 = world.addEntityComponentFlag(da3, entity, clonable, factory);
-                EntityInfoComponent entityInfo;
-                entityInfo.groupName = "E_TILE";
-                auto da5 = world.addEntityComponentFlag(da4, entity, entityInfo, factory);
                 TransformComponent tc;
+                TransformMatrix tm;
                 tc.localBounds = physic::BoundingBox(0, 0, 0, size.x, size.y, size.z);
                 tc.position = position;
                 tc.origin = size * 0.5f;
@@ -252,10 +226,36 @@ namespace odfaeg {
                 tm.setScale(scale);
                 tc.globalBounds = tc.localBounds.transform(tm);
                 tc.transformMatrix = tm;
-                auto da6 = world.addEntityComponentFlag(da5, entity, tc, factory);
-                Face face(va, material, world.entityComponentMapping.template getAgregate<TransformComponent>(da6, entity)->transformMatrix);
+                auto da2 = world.addEntityComponentFlag(da, entity, tc, factory);
+                MeshComponent mesh;
+                VertexArray va(sf::Quads, 4);
+                Vertex v1(sf::Vector3f(0, 0, 0), color);
+                Vertex v2(sf::Vector3f(size.x, 0, 0), color);
+                Vertex v3(sf::Vector3f(size.x, size.y, 0), color);
+                Vertex v4(sf::Vector3f(0, size.y, 0), color);
+                v1.texCoords = sf::Vector2f(subRect.left, subRect.top);
+                v2.texCoords = sf::Vector2f(subRect.left + subRect.width, subRect.top);
+                v3.texCoords = sf::Vector2f(subRect.left + subRect.width, subRect.top + subRect.height);
+                v4.texCoords = sf::Vector2f(subRect.left, subRect.top + subRect.height);
+                //std::cout<<"tex coords : "<<v2.texCoords.x<<" "<<v2.texCoords.y<<std::endl;
+                //v1.color = v2.color = v3.color = v4.color = color;
+
+
+                va[0] = v1;
+                va[1] = v2;
+                va[2] = v3;
+                va[3] = v4;
+                Material material;
+                material.addTexture(nullptr, sf::IntRect(0, 0, 0, 0));
+                Face face(va, material, tm);
                 mesh.faces.push_back(face);
-                return da6;
+                auto da3 = world.addEntityComponentFlag(da, entity, mesh, factory);
+                ClonableComponent clonable;
+                auto da4 = world.addEntityComponentFlag(da3, entity, clonable, factory);
+                EntityInfoComponent entityInfo;
+                entityInfo.groupName = "E_TILE";
+                auto da5 = world.addEntityComponentFlag(da4, entity, entityInfo, factory);
+                return da5;
             }
             template <typename World, typename DynamicArray, typename Factory>
             static auto createBigTileModel(World& world, DynamicArray& da, Factory& factory, EntityId entity, math::Vec3f position) {

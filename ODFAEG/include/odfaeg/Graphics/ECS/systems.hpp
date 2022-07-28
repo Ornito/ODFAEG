@@ -12,7 +12,7 @@ namespace odfaeg {
                     auto& array = std::get<0>(params);
                     this->template operator()<I+1>(tp, entityId, params, std::make_index_sequence<array.nbTypes()>());
                 }
-                template <size_t I=0, typename... Components, typename T2, class... D, size_t... Ints, class = typename std::enable_if_t<(sizeof...(Components) != 0 && I > 0 && I < sizeof...(Components)-1)>>
+                template <size_t I=0, typename... Components, typename T2, class... D, size_t... Ints, class = typename std::enable_if_t< (sizeof...(Components) != 0 && I > 0 && I < sizeof...(Components)-1)>>
                 void operator()(std::tuple<Components...>& tp, EntityId entityId, T2& params, std::index_sequence<Ints...> seq) {
                     if (std::get<I>(tp) != nullptr) {
                         auto& array = std::get<0>(params);
@@ -51,7 +51,7 @@ namespace odfaeg {
                     }
                 }
                 template <size_t I=0, typename... Components, typename T2, size_t... Ints, class... D, class... E, class... F, class = typename std::enable_if_t<sizeof...(Components) == 0>>
-                void operator()(std::tuple<Components...>& tp, EntityId entityId, T2& params,  std::index_sequence<Ints...>) {
+                void operator()(std::tuple<Components...>& tp, EntityId entityId, T2& params) {
                 }
                 template <typename T, typename Array, typename System, typename Mapping, typename T2, size_t... I>
                 void call_system(Array array, System system, Mapping componentMapping, std::vector<EntityId> entities, T2 params, std::index_sequence<I...>) {
@@ -112,9 +112,9 @@ namespace odfaeg {
                     auto componentMapping = std::get<1>(params);
                     auto factory = std::get<2>(params);
                     bool& first = std::get<std::tuple_size<std::tuple<Params...>>::value-1>();
-                    EntityId& tmpRootEntityId = *std::get<std::tuple_size<std::tuple<Params...>>::value-3>();
-                    EntityId& tmpParentEntityId = *std::get<std::tuple_size<std::tuple<Params...>>::value-2>();
-                    EntityId& tmpClonedParentEntityId = *std::get<std::tuple_size<std::tuple<Params...>>::value-4>();
+                    EntityId* tmpRootEntityId = *std::get<std::tuple_size<std::tuple<Params...>>::value-3>();
+                    EntityId* tmpParentEntityId = *std::get<std::tuple_size<std::tuple<Params...>>::value-2>();
+                    EntityId* tmpClonedParentEntityId = *std::get<std::tuple_size<std::tuple<Params...>>::value-4>();
                     //Vérifie si l'entité est clonable.
                     if (clonableComponent) {
 
@@ -125,23 +125,23 @@ namespace odfaeg {
                         if (first) {
                             //Si l'entité à clôner n'est pas un noeud racine, il faut ajouter le parent de l'entité à clôner à l'entité clônée, sinon, on stocke les parents pour le niveau suivant.
                             if (componentMapping.getRoot(toCloneId).get().load() != toCloneId.get().load()) {
-                                tmpRootEntityId = componentMapping.getRoot(toCloneId);
-                                tmpParentEntityId = componentMapping.branchIds[*toCloneId.get().load()];
-                                tmpClonedParentEntityId = componentMapping.branchIds[*toCloneId.get().load()];
+                                tmpRootEntityId = &componentMapping.getRoot(toCloneId);
+                                tmpParentEntityId = &componentMapping.branchIds[*toCloneId.get().load()];
+                                tmpClonedParentEntityId = &componentMapping.branchIds[*toCloneId.get().load()];
                             } else {
-                                tmpRootEntityId = clonedId;
-                                tmpParentEntityId = componentMapping.branchIds[*toCloneId.get().load()];
-                                tmpClonedParentEntityId = clonedId;
+                                tmpRootEntityId = &clonedId;
+                                tmpParentEntityId = &componentMapping.branchIds[*toCloneId.get().load()];
+                                tmpClonedParentEntityId = &clonedId;
                             }
                             first = false;
                         //Sinon on ajoute le noeud enfant au parent.
                         } else {
                             //Remettre à jour le parent, si ce n'est plus le même.
-                            if (tmpParentEntityId != componentMapping.branchIds[*toCloneId.get().load()]) {
-                                tmpParentEntityId = componentMapping.branchIds[*toCloneId.get().load()];
-                                tmpClonedParentEntityId = clonedId;
+                            if (*tmpParentEntityId != componentMapping.branchIds[*toCloneId.get().load()]) {
+                                tmpParentEntityId = &componentMapping.branchIds[*toCloneId.get().load()];
+                                tmpClonedParentEntityId = &clonedId;
                             }
-                            componentMapping.addChild(tmpRootEntityId, tmpClonedParentEntityId, clonedId);
+                            componentMapping.addChild(*tmpRootEntityId, *tmpClonedParentEntityId, clonedId);
                         }
                         return clonedId;
                     }
@@ -562,9 +562,10 @@ namespace odfaeg {
                 template <typename... Components, typename T, class = typename std::enable_if_t<core::contains<SceneGridComponent*, Components...>::value>>
                 bool operator()(std::tuple<Components...> components, EntityId entityId, T& params) {
                     auto scene = std::get<0>(components);
-                    auto componentMapping = std::get<0>(params);
+                    auto entityComponentArray = std::get<0>(params);
+                    auto componentMapping = std::get<1>(params);
                     if (scene != nullptr) {
-                        TransformComponent* tc = componentMapping.template getAgregate<TransformComponent>(params);
+                        TransformComponent* tc = componentMapping.template getAgregate<TransformComponent>(entityComponentArray, entityId);
                         scene->partitions.addEntity(tc->globalBounds, entityId);
                     }
                     return true;
@@ -875,7 +876,7 @@ namespace odfaeg {
                                                 EntityId root = componentMapping.getRoot(entity);
                                                 EntityInfoComponent* groupNameComponent = componentMapping.template getAgregate<EntityInfoComponent*>(componentArray, root);
                                                 if (groupNameComponent != nullptr) {
-                                                    size_t groupId = getGroupId(groupNameComponent->groupName);
+                                                    size_t groupId = getGroupIdentitfier(groupNameComponent->groupName);
                                                     if (groupsToRender.size() > 0 && expression.at(0) == '*') {
                                                         if (expression.find("-") != std::string::npos) {
                                                             expression= expression.substr(2, expression.size() - 2);
@@ -943,7 +944,7 @@ namespace odfaeg {
                                                 EntityId root = componentMapping.getRoot(entity);
                                                 EntityInfoComponent* groupNameComponent = componentMapping.template getAgregate<EntityInfoComponent*>(componentArray, root);
                                                 if (groupNameComponent != nullptr) {
-                                                    size_t groupId = getGroupId(groupNameComponent->groupName);
+                                                    size_t groupId = getGroupIdentifier(groupNameComponent->groupName);
                                                     if (groupsToRender.size() > 0 && expression.at(0) == '*') {
                                                         if (expression.find("-") != std::string::npos) {
                                                             expression= expression.substr(2, expression.size() - 2);

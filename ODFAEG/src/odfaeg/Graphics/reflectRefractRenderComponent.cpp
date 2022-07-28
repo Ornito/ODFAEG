@@ -615,6 +615,7 @@ namespace odfaeg {
                 for (unsigned int p = 0; p < Batcher::nbPrimitiveTypes; p++) {
                     if (vbBindlessTex[p].getVertexCount() > 0) {
                         vbBindlessTex[p].update();
+                        //std::cout<<"draw to vertex buffer"<<std::endl;
                         depthBuffer.drawInstanced(vbBindlessTex[p], vbBindlessTex[p].getPrimitiveType(), 0, vbBindlessTex[p].getVertexCount(), tm.size(), currentStates, vboWorldMatrices);
                         vbBindlessTex[p].clear();
                     }
@@ -806,6 +807,7 @@ namespace odfaeg {
                                             for (unsigned int j = 0; j < m_instances[i].getVertexArrays().size(); j++) {
                                                 if (entity == m_instances[i].getVertexArrays()[j]->getEntity()) {
                                                     for (unsigned int k = 0; k < m_instances[i].getVertexArrays()[j]->getVertexCount(); k++) {
+                                                        //std::cout<<"add vertex"<<std::endl;
                                                         vb.append((*m_instances[i].getVertexArrays()[j])[k]);
                                                     }
                                                 }

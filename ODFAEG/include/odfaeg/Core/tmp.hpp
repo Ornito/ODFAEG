@@ -27,7 +27,10 @@ namespace odfaeg {
 
         template <typename T, typename U=void, typename... Types>
         constexpr size_t index() {
-            return std::is_same<T, U>::value ? 0 : 1 + index<T, Types...>();
+            if (sizeof...(Types) > 0)
+                return std::is_same<T, U>::value ? 0 : 1 + index<T, Types...>();
+            else
+                return -1;
         }
         //Make index sequences from an offset.
         template<std::size_t N, typename Seq> struct offset_sequence;

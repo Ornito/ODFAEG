@@ -43,7 +43,7 @@ namespace odfaeg {
             static constexpr size_t getIndexOfTypeT() {
                 return index<T, TupleTypes...>();
             }
-            template <typename T>
+            template <typename T, class... D,class = typename std::enable_if_t<(std::tuple_size<types>::value > 0)>>
             T* get(unsigned int containerIdx) {
                 constexpr size_t I = getIndexOfTypeT<T>();
                 return (containerIdx < vectorSize<T>()) ? &std::get<I>(content)[containerIdx] : nullptr;
@@ -74,6 +74,56 @@ namespace odfaeg {
                 if (std::get<index<T, TupleTypes...>()>(content).size() == 0) {
                     return removeType<T>();
                 }
+                return *this;
+            }
+        };
+        template <>
+        struct DynamicTuple<> {
+            std::tuple<> content;
+            using types = typename std::tuple<>;
+
+
+            template <typename H>
+            DynamicTuple <H> add (H head) {
+                DynamicTuple<H> tuple;
+                tuple.content = std::tuple_cat(content, std::make_tuple(std::vector<H>()));
+                return tuple.add(head);
+            }
+            template <typename H>
+            DynamicTuple <H> addType () {
+                DynamicTuple<H> tuple;
+                tuple.content = std::tuple_cat(content, std::make_tuple(std::vector<H>()));
+                return tuple;
+            }
+            template <typename T>
+            constexpr size_t vectorSize() {
+                return 0;
+            }
+            static constexpr size_t nbTypes() {
+                return std::tuple_size<types>::value;
+            }
+            template <typename T>
+            static constexpr size_t getIndexOfTypeT() {
+                return -1;
+            }
+            template <typename T>
+            T* get(unsigned int containerIdx) {
+                return nullptr;
+            }
+            template <size_t I>
+            auto get(unsigned int containerIdx) {
+                return nullptr;
+            }
+            template <size_t I>
+            auto removeType() {
+                return *this;
+            }
+            template <typename T>
+            auto removeType() {
+                return *this;
+            }
+            template <typename T>
+            auto remove(T element) {
                 return *this;
             }
         };

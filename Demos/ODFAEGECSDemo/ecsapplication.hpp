@@ -30,6 +30,7 @@ namespace sorrok {
             getWorld()->generate_map<odfaeg::graphic::ecs::SceneGridComponent>(sa2, eca2, tGround, tWall, odfaeg::math::Vec2f(100, 50), mapZone);*/
             odfaeg::graphic::ecs::EntityId perPixelLinkedListRendererId = factory.createEntity();
             auto ra2 = odfaeg::graphic::ecs::ModelFactory::createPerPixelLinkedListBindlessRenderComponent(*getWorld(), factory, perPixelLinkedListRendererId, ra, getRenderWindow(), 0, "E_TILE");
+
             getWorld()->template addEntity<odfaeg::graphic::ecs::SceneGridComponent>(sa2, eca2, tileId);
             exec(sya, sa2, ra2, eca2);
         }

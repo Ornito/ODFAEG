@@ -71,7 +71,7 @@ namespace odfaeg {
               }
             };
 
-            size_t getGroupId (std::string groupName) {
+            size_t getGroupIdentitfier (std::string groupName) {
                 static size_t nbGroups=0;
                 std::map<std::string, size_t> mapping;
                 std::map<std::string, size_t>::iterator it = mapping.find(groupName);
@@ -264,16 +264,15 @@ namespace odfaeg {
                 public :
                 template <typename T, typename DynamicTuple>
                 T* getAgregate(DynamicTuple& tuple, EntityId entityId) {
-                    //std::cout<<"id : "<<*entityId<<","<<"size : "<<componentMapping.size()<<std::endl;
                     if (componentMapping[*entityId.get().load()][tuple.template getIndexOfTypeT<T>()].has_value())
                         return tuple.template get<T>(componentMapping[*entityId.get().load()][tuple.template getIndexOfTypeT<T>()].value());
                     return nullptr;
                 }
                 template <typename... Signature, typename DynamicTuple, typename System, typename... Params>
                 void apply(DynamicTuple& tuple, System& system, std::vector<EntityId>& entities, std::tuple<Params...>& params, bool reverse=false) {
-                  EntityId& tmpRootEntityId;
-                  EntityId& tmpParentEntityId;
-                  EntityId& tmpClonedParentEntityId;
+                  EntityId* tmpRootEntityId;
+                  EntityId* tmpParentEntityId;
+                  EntityId* tmpClonedParentEntityId;
                   bool first = true;
                   auto additionnal_params = std::make_tuple(tmpClonedParentEntityId, tmpRootEntityId, tmpParentEntityId, first);
                   auto cated_params = std::tuple_cat(params, additionnal_params);
@@ -305,9 +304,9 @@ namespace odfaeg {
                 }
                 template <typename... Signature, typename DynamicTuple, typename System, typename... Params, class R>
                 void apply(DynamicTuple& tuple, System& system, std::vector<EntityId>& entities, std::tuple<Params...>& params, std::vector<R>& ret, bool reverse=false) {
-                  EntityId& tmpRootEntityId;
-                  EntityId& tmpParentEntityId;
-                  EntityId& tmpClonedParentEntityId;
+                  EntityId* tmpRootEntityId;
+                  EntityId* tmpParentEntityId;
+                  EntityId* tmpClonedParentEntityId;
                   bool first  = true;
                   auto additionnal_params = std::make_tuple(tmpClonedParentEntityId, tmpRootEntityId, tmpParentEntityId, first);
                   auto cated_params = std::tuple_cat(params, additionnal_params);
@@ -327,7 +326,7 @@ namespace odfaeg {
                         size_t level = (treeLevels[*entities[i].get().load()].has_value()) ? treeLevels[*entities[i].get().load()].value() : 0;
                         for (unsigned int j = level; j < nbLevels[*entities[i].get().load()]; j++) {
                           for(unsigned int k = 0; k < childrenMapping[*getRoot(entities[i]).get().load()][j].size(); k++)
-                            this->template apply_impl<Signature...>(childrenMapping[*getRoot(entities[i]).get().load()][j][k], cated_params, system, params, std::index_sequence_for<Signature...>(), ret);
+                            this->template apply_impl<Signature...>(childrenMapping[*getRoot(entities[i]).get().load()][j][k], tuple, system, cated_params, std::index_sequence_for<Signature...>(), ret);
                         }
                       }
                   }
