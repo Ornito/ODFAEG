@@ -32,7 +32,7 @@ namespace sorrok {
             auto ra2 = odfaeg::graphic::ecs::ModelFactory::createPerPixelLinkedListBindlessRenderComponent(*getWorld(), factory, perPixelLinkedListRendererId, ra, getRenderWindow(), 0, "E_TILE");
 
             getWorld()->template addEntity<odfaeg::graphic::ecs::SceneGridComponent>(sa2, eca2, tileId);
-            exec(sya, sa2, ra2, eca2);
+          /*  exec(sya, sa2, ra2, eca2);*/
         }
         template <typename SystemArray, typename SceneArray, typename RendererArray, typename EntityComponentArray>
         void onRender(SystemArray& sya, SceneArray& sa, RendererArray& ra, EntityComponentArray& eca, odfaeg::graphic::RenderComponentManager *cm) {

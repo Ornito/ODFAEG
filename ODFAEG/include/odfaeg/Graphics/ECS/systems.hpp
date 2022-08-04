@@ -5,6 +5,7 @@
 namespace odfaeg {
     namespace graphic {
         namespace ecs {
+            size_t getGroupIdentitfier (std::string groupName);
             //Call the systems with the given system's IDs.
             struct MainSystem {
                 template <size_t I=0, typename... Components, typename T2, class = typename std::enable_if_t<(sizeof...(Components) != 0 && I == 0)>>
@@ -935,7 +936,7 @@ namespace odfaeg {
                             for (int i = x; i <= endX; i+=partitions->getOffsetX()) {
                                 for (int j = y; j <= endY; j+=partitions->getOffsetY()) {
                                     for (int k = z; k <= endZ; k+=partitions->getOffsetZ()) {
-                                        math::Vec3f point(i, j, k);
+                                        /*math::Vec3f point(i, j, k);
                                         auto partition = partitions.getPartitionAt(point);
                                         //Si il y a des entités à cet endroit là.
                                         if (partition != nullptr) {
@@ -969,7 +970,7 @@ namespace odfaeg {
                                                     }
                                                 }
                                             }
-                                        }
+                                        }*/
                                     }
                                 }
                             }

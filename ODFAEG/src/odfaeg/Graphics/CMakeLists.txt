@@ -136,6 +136,7 @@ set(SRC_ECS
 	${INCROOT}/ECS/systems.hpp
 	${INCROOT}/ECS/components.hpp
 	${INCROOT}/ECS/world.hpp
+	${SRCROOT}/ECS/system.cpp
 	)
 	
 set(SRC_GRAPHICS_2D
