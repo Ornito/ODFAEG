@@ -84,6 +84,7 @@ namespace odfaeg {
                 std::vector<size_t> nbLevels;
                 std::vector<std::optional<size_t>> treeLevels;
                 std::vector<EntityId> branchIds;
+                public :
                 template <typename Component, typename DynamicTuple>
                 auto addFlag(DynamicTuple& tuple) {
                     auto newTuple = tuple.template addType<Component>();
@@ -250,7 +251,6 @@ namespace odfaeg {
                     }
 
                 }
-                public :
                 template <typename T, typename DynamicTuple>
                 T* getAgregate(DynamicTuple& tuple, EntityId entityId) {
                     if (componentMapping[*entityId.get().load()][tuple.template getIndexOfTypeT<T>()].has_value())

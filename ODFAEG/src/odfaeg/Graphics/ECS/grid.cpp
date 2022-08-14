@@ -41,7 +41,7 @@ namespace odfaeg {
             BaseChangementMatrix Grid::getBaseChangementMatrix() {
                 return bm;
             }
-            bool Grid::addEntity (physic::BoundingBox globalBounds, EntityId entity) {
+            bool Grid::addEntity (physic::BoundingBox globalBounds, EntityId entity){
                 int x = globalBounds.getPosition().x;
                 int y = globalBounds.getPosition().y;
                 int z = globalBounds.getPosition().z;

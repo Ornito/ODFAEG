@@ -197,8 +197,7 @@ namespace odfaeg {
                 }
                 template <typename SceneArray, typename SceneComponent, typename Factory>
                 auto addSceneFlag(SceneArray& scenes,  EntityId& sceneId, SceneComponent scene, Factory& factory) {
-                    auto newScenes = scenes.add(scenes);
-                    sceneMapping.addFlag(sceneId, scenes, scene, factory);
+                    auto newScenes = sceneMapping.addFlag(sceneId, scenes, scene, factory);
                     this->scenesIds.push_back(sceneId);
                     return newScenes;
                 }

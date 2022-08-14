@@ -102,30 +102,6 @@ namespace odfaeg {
             static constexpr size_t nbTypes() {
                 return std::tuple_size<types>::value;
             }
-            template <typename T>
-            static constexpr size_t getIndexOfTypeT() {
-                return -1;
-            }
-            template <typename T>
-            T* get(unsigned int containerIdx) {
-                return nullptr;
-            }
-            template <size_t I>
-            auto get(unsigned int containerIdx) {
-                return nullptr;
-            }
-            template <size_t I>
-            auto removeType() {
-                return *this;
-            }
-            template <typename T>
-            auto removeType() {
-                return *this;
-            }
-            template <typename T>
-            auto remove(T element) {
-                return *this;
-            }
         };
         namespace details {
             //Return a tuple with elements at indexes.

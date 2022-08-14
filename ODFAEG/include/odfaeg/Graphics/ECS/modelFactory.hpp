@@ -249,7 +249,7 @@ namespace odfaeg {
                 material.addTexture(nullptr, sf::IntRect(0, 0, 0, 0));
                 Face face(va, material, tm);
                 mesh.faces.push_back(face);
-                auto da3 = world.addEntityComponentFlag(da, entity, mesh, factory);
+                auto da3 = world.addEntityComponentFlag(da2, entity, mesh, factory);
                 ClonableComponent clonable;
                 auto da4 = world.addEntityComponentFlag(da3, entity, clonable, factory);
                 EntityInfoComponent entityInfo;
