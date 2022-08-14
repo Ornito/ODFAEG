@@ -136,7 +136,7 @@ namespace odfaeg {
                 *   \brief call the onLoad function, this is where all resources used by the application are loaded.
                 */
                 void load() {
-                    onLoad();
+                    static_cast<D&>(*this).onLoad();
                 }
                 /** \fn void init()
                 *   \brief call the onInit function, this is where all the entities used by the application are initialized.

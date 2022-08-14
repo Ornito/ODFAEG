@@ -1,5 +1,6 @@
 #ifndef ODFAEG_TMP_HPP
 #define ODFAEG_TMP_HPP
+#include <tuple>
 namespace odfaeg {
     namespace core {
         template < typename Tp, typename... List >

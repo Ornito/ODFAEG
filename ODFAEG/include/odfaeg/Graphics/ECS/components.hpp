@@ -7,6 +7,8 @@
 #include "../renderWindow.h"
 #include "../view.h"
 #include "../rectangleShape.h"
+#include "../glCheck.h"
+#include <GL/glew.h>
 namespace odfaeg {
     namespace graphic {
         namespace ecs {
