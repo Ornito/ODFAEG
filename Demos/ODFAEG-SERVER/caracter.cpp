@@ -5,8 +5,8 @@ using namespace odfaeg::core;
 using namespace odfaeg::math;
 using namespace odfaeg::graphic;
 namespace sorrok {
-    Caracter::Caracter (std::string type, string name, string currentMapName, string classs, int level)
-    : AnimatedEntity (Vec3f(-25, -50, 0), Vec3f (50, 100, 0), Vec3f(25, 50, 0), type) {
+    Caracter::Caracter (std::string type, string name, string currentMapName, string classs, int level, EntityFactory& factory)
+    : AnimatedEntity (Vec3f(-25, -50, 0), Vec3f (50, 100, 0), Vec3f(25, 50, 0), type, factory) {
         currentAnimIndex = 0;
         this->name = name;
         this->classs = classs;

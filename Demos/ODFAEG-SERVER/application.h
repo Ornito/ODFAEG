@@ -36,8 +36,8 @@ namespace sorrok {
         Caracter* caracter;
         sf::Keyboard::Key actualKey, previousKey;
         std::vector<odfaeg::graphic::Tile*> tiles;
-        std::vector<odfaeg::graphic::Tile*> walls;
-        odfaeg::graphic::Map* theMap;
+        std::vector<odfaeg::graphic::g2d::Wall*> walls;
+        odfaeg::graphic::Scene* theMap;
         odfaeg::graphic::g2d::PonctualLight* light2;
         static const unsigned int PATH_ERROR_MARGIN = 5;
         odfaeg::math::Vec3f tmpPosition;
@@ -45,6 +45,7 @@ namespace sorrok {
         sql::Connection *connection;
         std::map<int, std::pair<std::vector<Item>, std::pair<sf::Time, sf::Time>>> itemsLooted;
         static int spotID;
+        odfaeg::graphic::EntityFactory entityFactory;
     public :
         MyAppli();
         ~MyAppli();

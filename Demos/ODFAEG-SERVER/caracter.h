@@ -7,10 +7,11 @@
 #include "odfaeg/Network/user.h"
 #include <string>
 #include <SFML/Graphics.hpp>
+#include "odfaeg/Graphics/entity.h"
 namespace sorrok {
     class Caracter : public odfaeg::graphic::AnimatedEntity {
     public :
-        Caracter (std::string type, std::string name, std::string currentMapName, std::string classs, int level);
+        Caracter (std::string type, std::string name, std::string currentMapName, std::string classs, int level, odfaeg::graphic::EntityFactory& factory);
         bool isMovable() const {
             return true;
         }

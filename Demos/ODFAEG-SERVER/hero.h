@@ -7,9 +7,9 @@
 namespace sorrok {
     class Hero : public Caracter {
     public :
-        Hero() : Caracter("E_HERO", "", "", "", 0) {}
+        Hero(odfaeg::graphic::EntityFactory& factory) : Caracter("E_HERO", "", "", "", 0, factory) {}
         Hero(odfaeg::network::User* user, std::string factionName, std::string name, std::string sex, std::string currentMapName, std::string hairColor,
-        std::string eyesColor, std::string skinColor, std::string faceType, std::string classs, int level);
+        std::string eyesColor, std::string skinColor, std::string faceType, std::string classs, int level, odfaeg::graphic::EntityFactory& factory);
         odfaeg::network::User* getUser();
         void setIsMovingFromKeyboard(bool b);
         bool isMovingFromKeyboard();

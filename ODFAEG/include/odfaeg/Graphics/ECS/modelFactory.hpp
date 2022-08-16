@@ -61,7 +61,7 @@ namespace odfaeg {
                                                             out uint texIndex;
                                                             void main () {
                                                                 gl_Position = projectionMatrix * viewMatrix * vec4(position.xyz, 1.f);
-                                                                fTexCoords = (infos.x != 0) ? (textureMatrix[infos.x-1] * vec4(texCoords, 1.f, 1.f)).xy : texCoords;
+                                                                fTexCoords = (textureIndex != 0) ? (textureMatrix[textureIndex-1] * vec4(texCoords, 1.f, 1.f)).xy : texCoords;
                                                                 frontColor = color;
                                                                 texIndex = textureIndex;
                                                             })";
@@ -144,16 +144,16 @@ namespace odfaeg {
                     quad.move(math::Vec3f(-window.getView().getSize().x * 0.5f, -window.getView().getSize().y * 0.5f, 0));
                     PerPixelLinkedListBindlessPass2RenderComponent* perPixelLinkedListBindlessPass2 = new PerPixelLinkedListBindlessPass2RenderComponent(window);
                     const std::string  vertexShader = R"(#version 460
-                                                            layout (location = 0) in vec3 position;
-                                                            layout (location = 1) in vec4 color;
-                                                            layout (location = 2) in vec2 texCoords;
-                                                            layout (location = 3) in vec3 normals;
-                                                            uniform mat4 projectionMatrix;
-                                                            uniform mat4 viewMatrix;
-                                                            uniform mat4 worldMat;
-                                                            void main () {
-                                                                gl_Position = projectionMatrix * viewMatrix * worldMat * vec4(position, 1.f);
-                                                            })";
+                                                        layout (location = 0) in vec3 position;
+                                                        layout (location = 1) in vec4 color;
+                                                        layout (location = 2) in vec2 texCoords;
+                                                        layout (location = 3) in vec3 normals;
+                                                        uniform mat4 projectionMatrix;
+                                                        uniform mat4 viewMatrix;
+                                                        uniform mat4 worldMat;
+                                                        void main () {
+                                                            gl_Position = projectionMatrix * viewMatrix * worldMat * vec4(position, 1.f);
+                                                        })";
                     const std::string fragmentShader =
                     R"(
                     #version 460
@@ -206,6 +206,7 @@ namespace odfaeg {
                    perPixelLinkedList.setParameter("projectionMatrix", projMatrix);
                    math::Matrix4f matrix = quad.getTransform().getMatrix().transpose();
                    perPixelLinkedList.setParameter("worldMat", matrix);
+                   perPixelLinkedList.setParameter("bg_color", 0, 0, 0, 0);
                    perPixelLinkedListBindlessPass2->fullScreenQuad = quad;
                    EntityId childId = factory.createEntity();
                    auto da3 = world.addSubRendererFlag(da, rendererId, rendererId, childId, 0, perPixelLinkedListBindlessPass2, factory);

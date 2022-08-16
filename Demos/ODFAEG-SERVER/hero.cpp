@@ -1,9 +1,10 @@
 #include "hero.h"
 using namespace odfaeg::network;
+using namespace odfaeg::graphic;
 namespace sorrok {
     Hero::Hero(User* user, std::string factionName, std::string name, std::string sex, std::string currentMapName, std::string hairColor,
-        std::string eyesColor, std::string skinColor, std::string faceType, std::string classs, int level)
-        : Caracter("E_HERO", name, currentMapName, classs, level) {
+        std::string eyesColor, std::string skinColor, std::string faceType, std::string classs, int level, EntityFactory& factory)
+        : Caracter("E_HERO", name, currentMapName, classs, level, factory) {
         this->factionName = factionName;
         this->sex = sex;
         this->hairColor = hairColor;

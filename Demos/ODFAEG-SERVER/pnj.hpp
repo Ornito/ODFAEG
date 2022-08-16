@@ -3,10 +3,11 @@
 #include "caracter.h"
 #include <vector>
 #include "quest.hpp"
+#include "odfaeg/Graphics/entity.h"
 namespace sorrok {
     class Pnj : public Caracter {
         public :
-            Pnj();
+            Pnj(odfaeg::graphic::EntityFactory& entity);
             void addQuest(Quest quest);
             std::vector<Quest> getQuests();
             bool isMovingFromKeyboard();
