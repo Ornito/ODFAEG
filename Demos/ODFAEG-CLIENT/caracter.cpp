@@ -8,7 +8,10 @@ using namespace odfaeg::graphic::gui;
 using namespace odfaeg::physic;
 using namespace odfaeg::math;
 namespace sorrok {
-    Caracter::Caracter (std::string type, std::string name, string currentMapName, string classs, int level) : BoneAnimation (Vec3f(-25, -50, 0), Vec3f (50, 100, 0), type) {
+    Caracter::Caracter(EntityFactory& factory) : BoneAnimation(odfaeg::math::Vec3f(0, 0, 0), odfaeg::math::Vec3f(0, 0, 0),"E_CARACTER", factory) {
+        currentAnimIndex = 0;
+    }
+    Caracter::Caracter (std::string type, std::string name, string currentMapName, string classs, int level, EntityFactory& factory) : BoneAnimation (Vec3f(-25, -50, 0), Vec3f (50, 100, 0), type, factory) {
         currentAnimIndex = 0;
         this->name = name;
         this->currentMapName = currentMapName;

@@ -18,10 +18,8 @@ namespace sorrok {
         enum ANIMS {
             WALKING, ATTACKING = 8, TIPPING_OVER = 16
         };
-        Caracter() : BoneAnimation(odfaeg::math::Vec3f(0, 0, 0), odfaeg::math::Vec3f(0, 0, 0),"E_CARACTER") {
-            currentAnimIndex = 0;
-        }
-        Caracter (std::string type, std::string name, std::string currentMapName, std::string classs, int level);
+        Caracter(odfaeg::graphic::EntityFactory& factory);
+        Caracter (std::string type, std::string name, std::string currentMapName, std::string classs, int level, odfaeg::graphic::EntityFactory& factory);
         Entity* clone();
         void setXpHpBar(odfaeg::graphic::gui::ProgressBar* hpBar, odfaeg::graphic::gui::ProgressBar* xpBar, odfaeg::graphic::gui::ProgressBar* manaBar);
         bool isMovable() const {

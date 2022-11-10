@@ -6,8 +6,8 @@
 namespace sorrok {
     class Monster : public Caracter {
     public :
-        Monster() : Caracter("E_MONSTER", "", "", "", 0) {}
-        Monster (std::string name, std::string currentMapName, std::string classs, int level, odfaeg::physic::BoundingPolyhedron zone);
+        Monster(odfaeg::graphic::EntityFactory& factory) : Caracter("E_MONSTER", "", "", "", 0, factory) {}
+        Monster (std::string name, std::string currentMapName, std::string classs, int level, odfaeg::physic::BoundingPolyhedron zone, odfaeg::graphic::EntityFactory& factory);
         odfaeg::physic::BoundingPolyhedron& getZone();
         odfaeg::math::Vec3f respawn ();
         bool isMonster() {

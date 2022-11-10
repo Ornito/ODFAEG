@@ -657,8 +657,8 @@ namespace odfaeg {
             * and finally we also need to sort them.
             * We also remove cv qualifier's and we pass the placeholders's types to the LateParameters class.
             */
-            using tuple_t = typename sort<LessPlaceceholder, typename unique<typename copy_if<is_placeholder, std::tuple<std::remove_cv_t<ArgT>...>>::f>::f>::f;
-            using late_params_t = typename lift<tuple_t, LateParameters, std::make_index_sequence<std::tuple_size<tuple_t>::value>>::f;    /**> alias to the placeholders's holder.*/
+            using tuple_t = typename meta::sort<LessPlaceceholder, typename meta::unique<typename meta::copy_if<is_placeholder, std::tuple<std::remove_cv_t<ArgT>...>>::f>::f>::f;
+            using late_params_t = typename meta::lift<tuple_t, LateParameters, std::make_index_sequence<std::tuple_size<tuple_t>::value>>::f;    /**> alias to the placeholders's holder.*/
             //We need to use two tuples here, one to store parameters values and another to store parameters values after the placeholders's values are binded.
             //jln lib doesn't compile on mscv so I created my own lib for meta functions.
             /*using late_params_t

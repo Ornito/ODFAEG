@@ -1,6 +1,7 @@
 #include "pnj.hpp"
+using namespace odfaeg::graphic;
 namespace sorrok {
-    Pnj::Pnj() : Caracter("E_PNJ", "QUESTY", "MapTest", "Novice", 1) {
+    Pnj::Pnj(EntityFactory& factory) : Caracter("E_PNJ", "QUESTY", "MapTest", "Novice", 1, factory) {
 
     }
     void Pnj::addQuest (Quest quest) {

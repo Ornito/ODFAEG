@@ -6,8 +6,8 @@ using namespace odfaeg::graphic;
 using namespace odfaeg::core;
 using namespace odfaeg::physic;
 namespace sorrok {
-    Monster::Monster (std::string name, std::string currentMapName, std::string classs, int level, BoundingPolyhedron zone)
-     : Caracter ("E_MONSTER", name, currentMapName, classs, level) {
+    Monster::Monster (std::string name, std::string currentMapName, std::string classs, int level, BoundingPolyhedron zone, EntityFactory& factory)
+     : Caracter ("E_MONSTER", name, currentMapName, classs, level, factory) {
         this->zone = zone;
         time1 = sf::seconds(5.f);
         time2 = sf::seconds(7.f);

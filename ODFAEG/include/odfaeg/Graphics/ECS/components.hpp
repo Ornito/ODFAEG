@@ -9,9 +9,36 @@
 #include "../rectangleShape.h"
 #include "../glCheck.h"
 #include <GL/glew.h>
+#include <vulkan/vulkan.h>
 namespace odfaeg {
     namespace graphic {
         namespace ecs {
+            struct VkInstanceCp {
+                VkInstance instance;
+            };
+            struct VkDebugMessengerCp {
+                VkDebugUtilsMessengerEXT debugMessenger;
+            };
+            struct VkPhysicalDeviceCp {
+                VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+            };
+            struct VkLogicalDeviceCp {
+                VkDevice device;
+                VkQueue graphicsQueue;
+                VkQueue presentQueue;
+            };
+            struct VkSurfaceKHRCp  {
+                VkSurfaceKHR surface;
+            };
+            struct VkSwapchainCp {
+                VkSwapchainKHR swapChain;
+                std::vector<VkImage> swapChainImages;
+                VkFormat swapChainImageFormat;
+                VkExtent2D swapChainExtent;
+            };
+            struct VkImageViewCp {
+                std::vector<VkImageView> imagesViews;
+            };
             enum WallType {
                     TOP_LEFT, TOP_RIGHT, BOTTOM_RIGHT, BOTTOM_LEFT, TOP_BOTTOM, RIGHT_LEFT, T_TOP, T_RIGHT, T_LEFT, T_BOTTOM, X, NB_WALL_TYPES
             };

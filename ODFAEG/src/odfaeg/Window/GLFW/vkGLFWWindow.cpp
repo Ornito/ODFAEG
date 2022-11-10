@@ -15,8 +15,6 @@ namespace odfaeg {
             glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
             glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
             window = glfwCreateWindow(mode.width, mode.height, title.toAnsiString().c_str(), nullptr, nullptr);
-            vkSettup.setCreateSurface(true, window);
-            vkSettup.initVulkan();
             opened = true;
         }
         void VKGLFWWindow::create (sf::WindowHandle handle, const ContextSettings& settings) {
@@ -88,14 +86,10 @@ namespace odfaeg {
         void VKGLFWWindow::setVerticalSyncEnabled(bool enabled) {
         }
         void VKGLFWWindow::display() {
-            vkSettup.drawFrame();
-            vkDeviceWaitIdle(vkSettup.getDevice());
+
         }
         const ContextSettings& VKGLFWWindow::getSettings() const {
             return m_settings;
-        }
-        VkSettup& VKGLFWWindow::getVkSettup() {
-            return vkSettup
         }
     }
 }

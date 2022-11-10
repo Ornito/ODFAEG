@@ -193,12 +193,10 @@ namespace odfaeg {
             void setVerticalSyncEnabled(bool enabled);
             void display();
             const ContextSettings& getSettings() const;
-            VkSettup& getVkSettup();
             private :
             void pushEvent(IEvent event);
             std::queue<IEvent> events;
             bool opened;
-            VkSettup vkSettup;
             ContextSettings m_settings;
             GLFWwindow* window;
             static VKGLFWWindow* currentGLFWWindow;

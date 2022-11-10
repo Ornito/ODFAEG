@@ -6,7 +6,7 @@
 namespace sorrok {
     class Pnj : public Caracter {
         public :
-            Pnj();
+            Pnj(odfaeg::graphic::EntityFactory& factory);
             bool isMovingFromKeyboard();
             bool isMonster();
             void addQuest(Quest quest);

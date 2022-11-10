@@ -136,13 +136,6 @@ namespace odfaeg {
                             if (*entity.get().load() == id) {
                                 return entity;
                             }
-                            EntityId parent = mapping.branchIds[*entity.get().load()];
-                            while (parent.get().load() != nullptr) {
-                                if (*parent.get().load() == id) {
-                                    return parent;
-                                }
-                                parent = mapping.branchIds[*parent.get().load()];
-                            }
                         }
                     }
                 }

@@ -50,6 +50,7 @@ namespace sorrok {
     class MyAppli : public odfaeg::core::Application,
                     public odfaeg::graphic::gui::ActionListener {
     private :
+        odfaeg::graphic::EntityFactory factory;
         unsigned int fps;
         const float speed = 0.2f;
         odfaeg::graphic::EntitiesUpdater *eu;
@@ -61,7 +62,7 @@ namespace sorrok {
         odfaeg::window::IKeyboard::Key actualKey, previousKey;
         std::vector<odfaeg::graphic::Tile*> tiles;
         std::vector<odfaeg::graphic::Tile*> walls;
-        odfaeg::graphic::Map* theMap;
+        odfaeg::graphic::Scene* theMap;
         odfaeg::graphic::g2d::PonctualLight* light2;
         odfaeg::core::ResourceCache<> cache;
         sf::Time timeBtwnTwoReq = sf::seconds(1.f);

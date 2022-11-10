@@ -17,3 +17,5 @@ namespace sorrok {
         }
     }
 }
+/*/usr/local/include/odfaeg/Core/fastDelegate.h|362|error: no matching function for call to ‘std::function<void(sorrok::SkillAction&, sorrok::Hero*&, sorrok::Skill&)>::function(odfaeg::core::DynamicWrapper<void, sorrok::SkillAction, sorrok::Hero*, sorrok::Skill>)’|
+/usr/include/c++/11/bits/std_function.h|414|note: candidate: ‘template<class _Functor, class, class> std::function<_Res(_ArgTypes ...)>::function(_Functor) [with _Functor = _Functor; <template-parameter-2-2> = <template-parameter-1-2>; <template-parameter-2-3> = <template-parameter-1-3>; _Res = void; _ArgTypes = {sorrok::SkillAction&, sorrok::Hero*&, sorrok::Skill&}]’|*/
