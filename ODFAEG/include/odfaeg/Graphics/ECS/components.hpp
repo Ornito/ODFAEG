@@ -1,5 +1,6 @@
 #ifndef ODFAEG_ECS_COMPONENTS_HPP
 #define ODFAEG_ECS_COMPONENTS_HPP
+#include "../../config.hpp"
 #include "../../Math/vec4.h"
 #include "grid.hpp"
 #include "../../Math/transformMatrix.h"
@@ -7,38 +8,15 @@
 #include "../renderWindow.h"
 #include "../view.h"
 #include "../rectangleShape.h"
+#ifndef VULKAN
 #include "../glCheck.h"
 #include <GL/glew.h>
+#else
 #include <vulkan/vulkan.h>
+#endif
 namespace odfaeg {
     namespace graphic {
         namespace ecs {
-            struct VkInstanceCp {
-                VkInstance instance;
-            };
-            struct VkDebugMessengerCp {
-                VkDebugUtilsMessengerEXT debugMessenger;
-            };
-            struct VkPhysicalDeviceCp {
-                VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
-            };
-            struct VkLogicalDeviceCp {
-                VkDevice device;
-                VkQueue graphicsQueue;
-                VkQueue presentQueue;
-            };
-            struct VkSurfaceKHRCp  {
-                VkSurfaceKHR surface;
-            };
-            struct VkSwapchainCp {
-                VkSwapchainKHR swapChain;
-                std::vector<VkImage> swapChainImages;
-                VkFormat swapChainImageFormat;
-                VkExtent2D swapChainExtent;
-            };
-            struct VkImageViewCp {
-                std::vector<VkImageView> imagesViews;
-            };
             enum WallType {
                     TOP_LEFT, TOP_RIGHT, BOTTOM_RIGHT, BOTTOM_LEFT, TOP_BOTTOM, RIGHT_LEFT, T_TOP, T_RIGHT, T_LEFT, T_BOTTOM, X, NB_WALL_TYPES
             };
@@ -72,6 +50,7 @@ namespace odfaeg {
                 std::vector<size_t> selectedBonesIndexes;
                 std::vector<AnimationComponent> boneAnimations;
             };
+            #ifndef VULKAN
             struct PerPixelLinkedListBindlessPass1RenderComponent  {
                 PerPixelLinkedListBindlessPass1RenderComponent(RenderWindow& window) : window(window) {}
                 GLuint atomicBuffer, linkedListBuffer, clearBuf, headPtrTex, bindlessTexUBO;
@@ -91,6 +70,7 @@ namespace odfaeg {
                 RectangleShape fullScreenQuad;
                 std::string expression;
             };
+            #endif
             struct MeshComponent {
                 std::vector<Face> faces;
             };

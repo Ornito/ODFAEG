@@ -1,5 +1,7 @@
 #ifndef ODFAEG_LIGHT_RENDER_COMPONENT_HPP
 #define ODFAEG_LIGHT_RENDER_COMPONENT_HPP
+#include "../config.hpp"
+#ifndef VULKAN
 #include "renderWindow.h"
 #include "renderTexture.h"
 #include "sprite.h"
@@ -8,14 +10,13 @@
 #include "2D/ambientLight.h"
 #include "../Physics/particuleSystem.h"
 #include "rectangleShape.h"
+
 /**
   *\namespace odfaeg
   * the namespace of the Opensource Development Framework Adapted for Every Games.
   */
 namespace odfaeg {
     namespace graphic {
-        #ifdef VULKAN
-        #else
         /**
           * \file OITRenderComponent.h
           * \class OITRenderComponent
@@ -85,7 +86,8 @@ namespace odfaeg {
                 VertexBuffer vb;
                 std::vector<float> matrices;
         };
-        #endif
+
     }
 }
+#endif
 #endif

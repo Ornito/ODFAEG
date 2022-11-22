@@ -15,6 +15,15 @@ using namespace odfaeg::window;
 ODFAEGCreator::ODFAEGCreator(sf::VideoMode vm, std::string title) :
 Application (vm, title, sf::Style::Resize|sf::Style::Close, ContextSettings(0, 8, 4, 4, 6)), isGuiShown (false), cursor(10), se(this), rtc("create") {
     //Command::sname = "modified by process";
+    EXPORT_CLASS_GUID(BoundingVolumeBoundingBox, BoundingVolume, BoundingBox)
+    EXPORT_CLASS_GUID_(EntityTile, Entity, Tile, VA_LIST(EntityFactory&), VA_LIST(std::ref(factory)))
+    EXPORT_CLASS_GUID_(EntityBigTile, Entity, BigTile, VA_LIST(EntityFactory&), VA_LIST(std::ref(factory)))
+    EXPORT_CLASS_GUID_(EntityWall, Entity, g2d::Wall, VA_LIST(EntityFactory&), VA_LIST(std::ref(factory)))
+    EXPORT_CLASS_GUID_(EntityDecor, Entity, g2d::Decor, VA_LIST(EntityFactory&), VA_LIST(std::ref(factory)))
+    EXPORT_CLASS_GUID_(EntityAnimation, Entity, Anim, VA_LIST(EntityFactory&), VA_LIST(std::ref(factory)))
+    EXPORT_CLASS_GUID_(EntityMesh, Entity, Mesh, VA_LIST(EntityFactory&), VA_LIST(std::ref(factory)))
+    EXPORT_CLASS_GUID_(EntityParticleSystem, Entity, ParticleSystem, VA_LIST(EntityFactory&), VA_LIST(std::ref(factory)))
+    EXPORT_CLASS_GUID(ShapeRectangleShape, Shape, RectangleShape)
     dpSelectTexture = nullptr;
     dpSelectEm = nullptr;
     sTextRect = nullptr;
@@ -1349,7 +1358,7 @@ void ODFAEGCreator::onUpdate(RenderWindow* window, IEvent& event) {
             rectSelect.setRect(pos.x, pos.y, pos.z, box.getSize().x, box.getSize().y, box.getSize().z);
             if (getWorld()->getCurrentSceneManager() != nullptr) {
                 //std::cout<<"select get visible entities"<<std::endl;
-                std::vector<Entity*> entities = getWorld()->getVisibleEntities(taSelectExpression->getText());
+                std::vector<Entity*> entities = getWorld()->getVisibleEntities(taSelectExpression->getText(), factory);
                 //std::cout<<"visible entities selected get : "<<entities.size()<<std::endl;
                 for (unsigned int i = 0; i < entities.size(); i++) {
                     //std::cout<<"type : "<<entities[i]->getType()<<std::endl<<"select pos : "<<rectSelect.getSelectionRect().getPosition()<<"select size : "<<rectSelect.getSelectionRect().getSize()<<"globalbounds pos : "<<entities[i]->getGlobalBounds().getPosition()<<"globalbounds size : "<<entities[i]->getGlobalBounds().getSize()<<std::endl;
@@ -1826,7 +1835,7 @@ void ODFAEGCreator::onExec() {
                     std::cout<<"name : "<<name<<"type : "<<type<<std::endl;
                     if (type == "EntityUpdater") {
                         //std::cout<<"load entities updater"<<std::endl;
-                        EntitiesUpdater* eu = new EntitiesUpdater();
+                        EntitiesUpdater* eu = new EntitiesUpdater(factory, *getWorld());
                         eu->setName(name);
                         getWorld()->addWorker(eu);
                         //std::cout<<"entities updater added"<<std::endl;
@@ -2090,7 +2099,7 @@ void ODFAEGCreator::actionPerformed(Button* button) {
             ucars[i] = std::tolower(lcars[i]);
         }
         minAppliname = std::string(ucars, appliname.length());
-        if(_mkdir(path.c_str()/*, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH*/) == -1) {
+        if(mkdir(path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == -1) {
             std::cerr<<"Failed to create application directory!";
             //std::cerr << "Error: " << strerror(errno);
         }
@@ -2479,7 +2488,7 @@ void ODFAEGCreator::actionPerformed(Button* button) {
     }
     if(button==bCreateEntitiesUpdater) {
         std::string name = taEntitiesUpdaterName->getText();
-        EntitiesUpdater* eu = new EntitiesUpdater();
+        EntitiesUpdater* eu = new EntitiesUpdater(factory, *getWorld());
         eu->setName(name);
         getWorld()->addWorker(eu);
         wNewEntitiesUpdater->setVisible(false);
@@ -2954,10 +2963,10 @@ void ODFAEGCreator::actionPerformed(Button* button) {
     if (button == bGenerateTerrain) {
         std::vector<Tile*> tiles;
         std::vector<Wall*> walls;
-        tiles.push_back(new Tile(nullptr, Vec3f(0, 0, 0), Vec3f(conversionStringFloat(taTileWidth->getText()), conversionStringFloat(taTileHeight->getText()), 0), sf::IntRect(0, 0, 0, 0)));
+        tiles.push_back(factory.make_entity<Tile>(nullptr, Vec3f(0, 0, 0), Vec3f(conversionStringFloat(taTileWidth->getText()), conversionStringFloat(taTileHeight->getText()), 0), sf::IntRect(0, 0, 0, 0), factory));
         getWorld()->generate_map(tiles, walls, Vec2f(conversionStringFloat(taTileWidth->getText()), conversionStringFloat(taTileHeight->getText())), BoundingBox(conversionStringFloat(taZoneXPos->getText()), conversionStringFloat(taZoneYPos->getText()),conversionStringFloat(taZoneZPos->getText()),
                                                                                                                                                             conversionStringFloat(taZoneWidth->getText()), conversionStringFloat(taZoneHeight->getText()),conversionStringFloat(taZoneDepth->getText())),
-                           (cbIs3DTerrain->isChecked()) ? true : false);
+                           (cbIs3DTerrain->isChecked()) ? true : false, factory);
         wGenerateTerrain->setVisible(false);
         getRenderComponentManager().setEventContextActivated(false, *wGenerateTerrain);
         tScriptEdit->setEventContextActivated(true);
@@ -3031,7 +3040,7 @@ void ODFAEGCreator::actionPerformed(MenuItem* item) {
         if (appliname != "" && getWorld()->getCurrentSceneManager() != nullptr) {
             if (!showRectSelect) {
                 Vec3f position = getRenderWindow().mapPixelToCoords(Vec3f(cursor.getPosition().x, getRenderWindow().getSize().y - cursor.getPosition().y, 0))+getRenderWindow().getView().getSize()*0.5f;
-                Tile* tile = new Tile(nullptr, position,Vec3f(100, 50, 0), sf::IntRect(0, 0, gridWidth, gridHeight));
+                Tile* tile = factory.make_entity<Tile>(nullptr, position,Vec3f(100, 50, 0), sf::IntRect(0, 0, gridWidth, gridHeight), factory);
                 selectedObject = tile;
                 std::cout << "wall center : " << tile->getCenter()<< std::endl;
                 displayTileInfos(tile);
@@ -3060,7 +3069,7 @@ void ODFAEGCreator::actionPerformed(MenuItem* item) {
                         x = rect.getPosition().x+offsetX;
                         while (x <= endX) {
                             Vec3f position = getGridCellPos(Vec3f(x, y, 0));
-                            Tile* tile = new Tile(nullptr,position,Vec3f(gridWidth, gridHeight, 0),sf::IntRect(0, 0, gridWidth, gridHeight));
+                            Tile* tile = factory.make_entity<Tile>(nullptr,position,Vec3f(gridWidth, gridHeight, 0),sf::IntRect(0, 0, gridWidth, gridHeight), factory);
                             rectSelect.addItem(tile);
                             if (rectSelect.getItems().size() == 1) {
                                 selectedObject = tile;
@@ -3076,7 +3085,7 @@ void ODFAEGCreator::actionPerformed(MenuItem* item) {
                     for (int x = rect.getPosition().x; x < rect.getPosition().x + rect.getSize().x; x+=gridWidth) {
                         for (int y = rect.getPosition().y; y <  rect.getPosition().y + rect.getSize().y; y+=gridHeight) {
                             Vec3f position = getGridCellPos(Vec3f(x, y, 0));
-                            Tile* tile = new Tile(nullptr,position,Vec3f(gridWidth, gridHeight, 0),sf::IntRect(0, 0, gridWidth, gridHeight));
+                            Tile* tile = factory.make_entity<Tile>(nullptr,position,Vec3f(gridWidth, gridHeight, 0),sf::IntRect(0, 0, gridWidth, gridHeight), factory);
                             rectSelect.addItem(tile);
                             if (rectSelect.getItems().size() == 1) {
                                 selectedObject = tile;
@@ -3093,7 +3102,7 @@ void ODFAEGCreator::actionPerformed(MenuItem* item) {
     if(item->getText() == "Decor") {
         if (appliname != "" && getWorld()->getCurrentSceneManager() != nullptr) {
             if (!showRectSelect) {
-                Decor* decor = new Decor();
+                Decor* decor = factory.make_entity<Decor>(factory);
                 selectedObject = decor;
                 displayDecorInfos(decor);
                 getWorld()->addEntity(decor);
@@ -3106,7 +3115,7 @@ void ODFAEGCreator::actionPerformed(MenuItem* item) {
                 rectSelect.setRect(pos.x, pos.y, pos.z, rectSelect.getSelectionRect().getSize().x,rectSelect.getSelectionRect().getSize().y, rectSelect.getSelectionRect().getSize().z);
                 for (int x = rect.getPosition().x; x < rect.getPosition().x + rect.getSize().x-gridWidth; x+=gridWidth) {
                     for (int y = rect.getPosition().y; y <  rect.getPosition().y + rect.getSize().y-gridHeight; y+=gridHeight) {
-                        Decor* decor = new Decor();
+                        Decor* decor = factory.make_entity<Decor>(factory);
                         rectSelect.addItem(decor);
                         if (rectSelect.getItems().size() == 1) {
                             selectedObject = decor;
@@ -3122,7 +3131,7 @@ void ODFAEGCreator::actionPerformed(MenuItem* item) {
     if (item->getText() == "Wall") {
          if (appliname != "" && getWorld()->getCurrentSceneManager() != nullptr) {
             if (!showRectSelect) {
-                Wall* wall = new Wall();
+                Wall* wall = factory.make_entity<Wall>(factory);
                 Vec3f position = getRenderWindow().mapPixelToCoords(Vec3f(cursor.getPosition().x, getRenderWindow().getSize().y - cursor.getPosition().y, 0))+getRenderWindow().getView().getSize()*0.5f;
                 wall->setPosition(position);
                 wall->setName("WALL");
@@ -3138,7 +3147,7 @@ void ODFAEGCreator::actionPerformed(MenuItem* item) {
                 rectSelect.setRect(pos.x, pos.y, pos.z, rectSelect.getSelectionRect().getSize().x,rectSelect.getSelectionRect().getSize().y, rectSelect.getSelectionRect().getSize().z);
                 for (int x = rect.getPosition().x; x < rect.getPosition().x + rect.getSize().x-gridWidth; x+=gridWidth) {
                     for (int y = rect.getPosition().y; y <  rect.getPosition().y + rect.getSize().y-gridHeight; y+=gridHeight) {
-                        Wall* wall = new Wall();
+                        Wall* wall = factory.make_entity<Wall>(factory);
                         rectSelect.addItem(wall);
                         if (rectSelect.getItems().size() == 1) {
                             selectedObject = wall;
@@ -3154,7 +3163,7 @@ void ODFAEGCreator::actionPerformed(MenuItem* item) {
     if (item->getText() == "Animation") {
         if (appliname != "" && getWorld()->getCurrentSceneManager() != nullptr) {
             if (!showRectSelect) {
-                Anim* anim = new Anim();
+                Anim* anim = factory.make_entity<Anim>(factory);
                 selectedObject = anim;
                 displayAnimInfos(anim);
                 getWorld()->addEntity(anim);
@@ -3167,7 +3176,7 @@ void ODFAEGCreator::actionPerformed(MenuItem* item) {
                 rectSelect.setRect(pos.x, pos.y, pos.z, rectSelect.getSelectionRect().getSize().x,rectSelect.getSelectionRect().getSize().y, rectSelect.getSelectionRect().getSize().z);
                 for (int x = rect.getPosition().x; x < rect.getPosition().x + rect.getSize().x-gridWidth; x+=gridWidth) {
                     for (int y = rect.getPosition().y; y <  rect.getPosition().y + rect.getSize().y-gridHeight; y+=gridHeight) {
-                        Anim* anim = new Anim();
+                        Anim* anim = factory.make_entity<Anim>(factory);
                         rectSelect.addItem(anim);
                         if (rectSelect.getItems().size() == 1) {
                             selectedObject = anim;
@@ -3183,7 +3192,7 @@ void ODFAEGCreator::actionPerformed(MenuItem* item) {
     if (item->getText() == "Particle System") {
         if (appliname != "" && getWorld()->getCurrentSceneManager() != nullptr) {
             if (!showRectSelect) {
-                ParticleSystem* ps = new ParticleSystem(Vec3f(0, 0, 0),Vec3f(100, 100, 0));
+                ParticleSystem* ps = factory.make_entity<ParticleSystem>(Vec3f(0, 0, 0),Vec3f(100, 100, 0), factory);
                 selectedObject = ps;
                 displayParticleSystemInfos(ps);
                 getWorld()->addEntity(ps);
@@ -3202,7 +3211,7 @@ void ODFAEGCreator::actionPerformed(MenuItem* item) {
     if (item->getText() == "Ponctual Light") {
         if (appliname != "" && getWorld()->getCurrentSceneManager() != nullptr) {
             if (!showRectSelect) {
-                PonctualLight* pl = new PonctualLight(Vec3f(-50, 420, 420), 100, 50, 0, 255, sf::Color::Yellow, 16);
+                PonctualLight* pl = factory.make_entity<PonctualLight>(Vec3f(-50, 420, 420), 100, 50, 0, 255, sf::Color::Yellow, 16, factory);
                 selectedObject = pl;
                 displayPonctualLightInfos(pl);
                 getWorld()->addEntity(pl);

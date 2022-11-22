@@ -1,5 +1,6 @@
 #ifndef VKGLFW_WINDOW_HPP
 #define VKGLFW_WINDOW_HPP
+#include "../../config.hpp"
 #ifdef  VULKAN
 #include "../vkSettup.hpp"
 #include "../iWindow.hpp"
@@ -193,10 +194,12 @@ namespace odfaeg {
             void setVerticalSyncEnabled(bool enabled);
             void display();
             const ContextSettings& getSettings() const;
+            VkSettup& getVkSettup();
             private :
             void pushEvent(IEvent event);
             std::queue<IEvent> events;
             bool opened;
+            VkSettup vkSettup;
             ContextSettings m_settings;
             GLFWwindow* window;
             static VKGLFWWindow* currentGLFWWindow;
@@ -205,4 +208,3 @@ namespace odfaeg {
 }
 #endif
 #endif // VKGLFW_WINDOW
-

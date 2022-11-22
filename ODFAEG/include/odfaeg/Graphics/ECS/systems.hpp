@@ -751,6 +751,7 @@ namespace odfaeg {
                     }
                 }
             };
+            #ifndef VULKAN
             struct PerPixelLinkedListRenderSystem {
                 template <typename... Components, typename T, class = typename std::enable_if_t<core::contains<PerPixelLinkedListBindlessPass1RenderComponent*, Components...>::value>>
                 void operator()(std::tuple<Components...> components, T& params) {
@@ -837,7 +838,7 @@ namespace odfaeg {
 
                 }
             };
-
+            #endif
             //Do the frustrum culling and load datas to renderers.
             struct FrustrumCullingSystem {
                 //Copie des données des entités visible de la scene.

@@ -41,10 +41,10 @@
 #include <map>
 #include <string>
 #include "../../../include/odfaeg/Graphics/export.hpp"
-#include "../Window/vkSettup.hpp"
 #ifndef VULKAN
 #include "../../../include/odfaeg/Window/iGlResource.hpp"
 #else
+#include "../Window/vkSettup.hpp"
 #include <vulkan/vulkan.hpp>
 #endif // VULKAN
 namespace sf

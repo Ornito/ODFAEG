@@ -1,5 +1,5 @@
 #include "../../../include/odfaeg/Window/vkDebug.hpp"
-#ifdef VULAN
+#ifdef VULKAN
 namespace odfaeg {
     namespace window {
         VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger) {

@@ -12,10 +12,9 @@
 #include <vector>
 #include "../config.hpp"
 #include "../Physics/boundingBox.h"
-#ifndef VULKAN
+
 #include "../../../include/odfaeg/Window/iGlResource.hpp"
 #include "vbo.h"
-#endif
 #include "vertexArray.h"
 /**
   *\namespace odfaeg
@@ -23,8 +22,6 @@
   */
 namespace odfaeg {
     namespace graphic {
-        #ifdef VULKAN
-        #else
         ////////////////////////////////////////////////////////////
         /// \brief Define a set of one or more 2D primitives
         ///
@@ -216,7 +213,7 @@ namespace odfaeg {
             bool loop;
             Entity* m_entity;
         };
-        #endif
+
     }
 } // namespace sf
 

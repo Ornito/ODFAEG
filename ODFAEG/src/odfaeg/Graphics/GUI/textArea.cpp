@@ -137,15 +137,13 @@ namespace odfaeg {
                 #endif
                 target.draw(text);
                 //Il faut restaurer les paramètres d'avant si un scissor test a été défini avant de dessiner la TextArea.
+                #ifndef VULKAN
                 if (sctest == false) {
-                    #ifndef VULKAN
                     glCheck(glDisable(GL_SCISSOR_TEST));
-                    #endif
                 } else {
-                    #ifndef VULKAN
                     glCheck(glScissor(values[0], values[1], values[2], values[3]));
-                    #endif
                 }
+                #endif
                 if(haveFocus)
                     target.draw(va);
             }

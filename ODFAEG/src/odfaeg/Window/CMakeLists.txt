@@ -42,6 +42,12 @@ set(SRC_WINDOW
 	${SRCROOT}/SFML/sfmlMouse.cpp
 	${INCROOT}/SFML/sfmlContextImpl.hpp
 	${SRCROOT}/SFML/sfmlContextImpl.cpp
+	${INCROOT}/GLFW/vkGLFWWindow.hpp
+	${SRCROOT}/GLFW/vkGLFWWindow.cpp
+	${INCROOT}/vkDebug.hpp
+	${SRCROOT}/vkDebug.cpp
+	${INCROOT}/vkSettup.hpp
+	${SRCROOT}/vkSettup.cpp
 )
 if (UNIX)
 set(PLATEFORM_SRC

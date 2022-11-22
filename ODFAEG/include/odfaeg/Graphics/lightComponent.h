@@ -1,13 +1,12 @@
 #ifndef ODFAEG_LIGHT_COMPONENT
 #define ODFAEG_LIGHT_COMPONENT
 #define GLFW_INCLUDE_NONE
-#include "GL/glew.h"
-#include "component.h"
 #ifndef VULKAN
-
+#include "GL/glew.h"
 #include "glCheck.h"
-
 #endif
+#include "component.h"
+
 namespace odfaeg {
     namespace graphic {
         class LightComponent : public Component {

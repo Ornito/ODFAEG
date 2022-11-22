@@ -48,7 +48,7 @@ namespace odfaeg {
                 #endif
                 #if defined (ODFAEG_SYSTEM_LINUX)
                  if (!isDllOpened) {
-                    flib = dlopen(path.c_str(), RTLD_LAZY);
+                    flib = reinterpret_cast<FILE*>(dlopen(path.c_str(), RTLD_LAZY));
                     if (!flib) {
                         throw Erreur(10, "Failed to open dynamic library!", 3);
                     }

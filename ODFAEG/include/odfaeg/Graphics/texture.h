@@ -36,8 +36,10 @@
 #include "../Math/matrix4.h"
 #include <SFML/Graphics/Image.hpp>
 #ifndef VULKAN
+#include "../Window/vkSettup.hpp"
 #include "../../../include/odfaeg/Window/iGlResource.hpp"
 #endif
+
 namespace sf {
     class InputStream;
     class Image;
@@ -55,18 +57,36 @@ namespace odfaeg
         class Texture {
             public :
             bool loadFromImage(const sf::Image& image, const sf::IntRect& area = sf::IntRect());
+            bool loadFromFile(const std::string& filename, const sf::IntRect& area = sf::IntRect());
             bool create(unsigned int width, unsigned int height);
             sf::Vector2u getSize() const;
             void update(const sf::Uint8* pixels, unsigned int width, unsigned int height, unsigned int x, unsigned int y);
             void setSmooth(bool smooth);
             void update(const Texture& texture);
+            void update(const Texture& texture, unsigned int x, unsigned int y);
             void swap(Texture& texture);
             static unsigned int getMaximumSize();
+            bool createCubeMap (unsigned int width, unsigned int height);
+            bool isSmooth() const;
+            void setRepeated(bool repeated);
+            bool isRepeated() const;
+            bool isCubemap();
+            unsigned int getNativeHandle();
+            unsigned int getId() const;
+            void setNativeHandle(unsigned int handle, unsigned int width, unsigned int height);
         private :
             friend class Text;
             friend class RenderTexture;
             friend class RenderTarget;
             sf::Uint64 m_cacheId;
+            unsigned int m_texture;
+            bool m_pixelsFlipped, m_isRepeated, m_isSmooth;
+            sf::Image        m_image;
+            sf::IntRect  m_area;
+            sf::Vector2u m_size;          ///< Public texture size
+            sf::Vector2u m_actualSize;    ///< Actual texture size (can be greater than public size because of padding)
+            unsigned int id;
+
         };
         #else
         ////////////////////////////////////////////////////////////

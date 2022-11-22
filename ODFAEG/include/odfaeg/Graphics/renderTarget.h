@@ -8,6 +8,7 @@
 #include <SFML/Graphics/PrimitiveType.hpp>
 #include "shader.h"
 #include <cstdarg>
+
 ////////////////////////////////////////////////////////////
 //
 // /!\ Important : this class is a modification of the circle shape class of the SFML
@@ -37,8 +38,15 @@
 ////////////////////////////////////////////////////////////
 
 namespace odfaeg {
+#ifdef VULKAN
+    namespace window {
+        class VkSettup;
+    }
+    #endif
+
     namespace graphic {
         class Drawable;
+
         #ifdef VULKAN
         class RenderTarget {
             public :
@@ -194,11 +202,11 @@ namespace odfaeg {
             virtual sf::Vector2u getSize() const = 0;
             void cleanup();
         protected :
-            RenderTarget (window::VkSettup& vkSettup);
-            void initialize();
+            RenderTarget ();
+            void initialize(window::VkSettup& settup);
             VkRenderPass renderPass;
             std::vector<VkFramebuffer> swapChainFramebuffers;
-            window::VkSettup& vkSettup;
+            window::VkSettup* vkSettup;
             void createRenderPass();
         private :
             void createGraphicPipeline(const Vertex* vertices, unsigned int vertexCount, sf::PrimitiveType type,

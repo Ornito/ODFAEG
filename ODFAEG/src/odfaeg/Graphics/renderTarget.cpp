@@ -7,11 +7,14 @@
 #include "glCheck.h"
 #include "GlDebug.hpp"
 #endif
+#ifdef VULKAN
+#include "../../../include/odfaeg/Window/vkSettup.hpp"
+#endif
 namespace
 {
-    #ifdef VULKAN
+    #ifndef VULKAN
 
-    #else
+
     // Convert an sf::BlendMode::Factor constant to the corresponding OpenGL constant.
     sf::Uint32 factorToGlConstant(sf::BlendMode::Factor blendFactor)
     {
@@ -48,14 +51,17 @@ namespace odfaeg {
     namespace graphic {
         using namespace sf;
         #ifdef VULKAN
-        RenderTarget::RenderTarget(window::VkSettup& vkSettup) : vkSettup(vkSettup),
+        RenderTarget::RenderTarget() :
         m_defaultView(), m_view() {
+
         }
         RenderTarget::~RenderTarget() {
             cleanup();
-            vkDestroyRenderPass(vkSettup.getDevice(), renderPass, nullptr);
+            vkDestroyRenderPass(vkSettup->getDevice(), renderPass, nullptr);
         }
-        void RenderTarget::initialize() {
+        void RenderTarget::initialize(window::VkSettup& settup) {
+            std::cout<<"initialize"<<std::endl;
+            vkSettup = &settup;
             m_defaultView = View (static_cast<float>(getSize().x), static_cast<float>(getSize().y), -static_cast<float>(getSize().y) - 200, static_cast<float>(getSize().y)+200);
             m_defaultView.reset(physic::BoundingBox(0, 0, -static_cast<float>(getSize().y) - 200,static_cast<float>(getSize().x), static_cast<float>(getSize().y),static_cast<float>(getSize().y)+200));
             m_view = m_defaultView;
@@ -70,13 +76,11 @@ namespace odfaeg {
                                                         })";
             const std::string defaultFragmentShader = R"(#version 450
                                                           #extension GL_ARB_separate_shader_objects : enable
-
                                                           layout(location = 0) out vec4 outColor;
-
                                                           void main() {
                                                               outColor = vec4(1.0, 0.0, 0.0, 1.0);
                                                           })";
-             defaultShader.setVkSettup(&vkSettup);
+             defaultShader.setVkSettup(vkSettup);
              if (!defaultShader.loadFromMemory(defaultVertexShader, defaultFragmentShader)) {
                   throw core::Erreur (0, "Failed to load default shader", 1);
              }
@@ -137,13 +141,14 @@ namespace odfaeg {
         }
         void RenderTarget::draw(const Vertex* vertices, unsigned int vertexCount, sf::PrimitiveType type,
                       RenderStates states) {
+
              createGraphicPipeline(vertices, vertexCount, type, states);
              createCommandPool();
              createCommandBuffers();
         }
         void RenderTarget::createRenderPass() {
             VkAttachmentDescription colorAttachment{};
-            colorAttachment.format =    vkSettup.getSwapchainImageFormat();
+            colorAttachment.format =    vkSettup->getSwapchainImageFormat();
             colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
             colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
             colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -176,7 +181,7 @@ namespace odfaeg {
             dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
             renderPassInfo.dependencyCount = 1;
             renderPassInfo.pDependencies = &dependency;
-            if (vkCreateRenderPass(vkSettup.getDevice(), &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS) {
+            if (vkCreateRenderPass(vkSettup->getDevice(), &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS) {
                 throw core::Erreur(0, "failed to create render pass!", 1);
             }
 
@@ -213,14 +218,14 @@ namespace odfaeg {
             VkViewport viewport{};
             viewport.x = 0.0f;
             viewport.y = 0.0f;
-            viewport.width = vkSettup.getSwapchainExtends().width;
-            viewport.height = vkSettup.getSwapchainExtends().height;
+            viewport.width = vkSettup->getSwapchainExtends().width;
+            viewport.height = vkSettup->getSwapchainExtends().height;
             viewport.minDepth = 0.0f;
             viewport.maxDepth = 1.0f;
 
             VkRect2D scissor{};
             scissor.offset = {0, 0};
-            scissor.extent = vkSettup.getSwapchainExtends();
+            scissor.extent = vkSettup->getSwapchainExtends();
 
             VkPipelineViewportStateCreateInfo viewportState{};
             viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
@@ -264,7 +269,7 @@ namespace odfaeg {
             pipelineLayoutInfo.setLayoutCount = 0;
             pipelineLayoutInfo.pushConstantRangeCount = 0;
 
-            if (vkCreatePipelineLayout(vkSettup.getDevice(), &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
+            if (vkCreatePipelineLayout(vkSettup->getDevice(), &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
                 throw core::Erreur(0, "failed to create pipeline layout!", 1);
             }
             VkGraphicsPipelineCreateInfo pipelineInfo{};
@@ -282,20 +287,20 @@ namespace odfaeg {
             pipelineInfo.subpass = 0;
             pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 
-            if (vkCreateGraphicsPipelines(vkSettup.getDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS) {
+            if (vkCreateGraphicsPipelines(vkSettup->getDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS) {
                 throw core::Erreur(0, "failed to create graphics pipeline!", 1);
             }
             defaultShader.cleanupShaderModules();
         }
         void RenderTarget::createCommandPool() {
-            window::VkSettup::QueueFamilyIndices queueFamilyIndices = vkSettup.findQueueFamilies(vkSettup.getPhysicalDevice());
+            window::VkSettup::QueueFamilyIndices queueFamilyIndices = vkSettup->findQueueFamilies(vkSettup->getPhysicalDevice());
 
             VkCommandPoolCreateInfo poolInfo{};
             poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
             poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily;
             poolInfo.flags = 0; // Optionel
-            if (vkCreateCommandPool(vkSettup.getDevice(), &poolInfo, nullptr, &commandPool) != VK_SUCCESS) {
-                throw core::Erreur(0, "échec de la création d'une command pool!", 1);
+            if (vkCreateCommandPool(vkSettup->getDevice(), &poolInfo, nullptr, &commandPool) != VK_SUCCESS) {
+                throw core::Erreur(0, "Ã©chec de la crÃ©ation d'une command pool!", 1);
             }
         }
         void RenderTarget::createCommandBuffers() {
@@ -307,7 +312,7 @@ namespace odfaeg {
             allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
             allocInfo.commandBufferCount = (uint32_t) commandBuffers.size();
 
-            if (vkAllocateCommandBuffers(vkSettup.getDevice(), &allocInfo, commandBuffers.data()) != VK_SUCCESS) {
+            if (vkAllocateCommandBuffers(vkSettup->getDevice(), &allocInfo, commandBuffers.data()) != VK_SUCCESS) {
                 throw core::Erreur(0, "failed to allocate command buffers!", 1);
             }
 
@@ -324,7 +329,7 @@ namespace odfaeg {
                 renderPassInfo.renderPass = renderPass;
                 renderPassInfo.framebuffer = swapChainFramebuffers[i];
                 renderPassInfo.renderArea.offset = {0, 0};
-                renderPassInfo.renderArea.extent = vkSettup.getSwapchainExtends();
+                renderPassInfo.renderArea.extent = vkSettup->getSwapchainExtends();
 
                 VkClearValue clrColor = {clearColor.r / 255.f,clearColor.g / 255.f, clearColor.b / 255.f, clearColor.a / 255.f};
                 renderPassInfo.clearValueCount = 1;
@@ -343,12 +348,13 @@ namespace odfaeg {
                 }
 
             }
-            vkSettup.setCommandBuffers(commandBuffers);
+            vkSettup->setCommandBuffers(commandBuffers);
         }
         void RenderTarget::cleanup() {
-            vkDestroyCommandPool(vkSettup.getDevice(), commandPool, nullptr);
-            vkDestroyPipeline(vkSettup.getDevice(), graphicsPipeline, nullptr);
-            vkDestroyPipelineLayout(vkSettup.getDevice(), pipelineLayout, nullptr);
+            std::cout<<"clean up"<<std::endl;
+            vkDestroyCommandPool(vkSettup->getDevice(), commandPool, nullptr);
+            vkDestroyPipeline(vkSettup->getDevice(), graphicsPipeline, nullptr);
+            vkDestroyPipelineLayout(vkSettup->getDevice(), pipelineLayout, nullptr);
         }
         #else
         ////////////////////////////////////////////////////////////
@@ -998,4 +1004,3 @@ namespace odfaeg {
         #endif
     }
 }
-

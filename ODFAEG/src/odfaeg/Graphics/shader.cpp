@@ -183,15 +183,17 @@ namespace odfaeg {
             }
             VkShaderModuleCreateInfo createVSInfo{};
             createVSInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-            createVSInfo.codeSize = spvVertexShaderCode.size();
+            createVSInfo.codeSize = 4*spvVertexShaderCode.size();
             createVSInfo.pCode = spvVertexShaderCode.data();
+            std::cout<<"size spirv verrex shader code : "<<spvVertexShaderCode.size()<<std::endl;
             if (vkCreateShaderModule(vkSettup->getDevice(), &createVSInfo, nullptr, &vertexShaderModule) != VK_SUCCESS) {
                 throw core::Erreur (0, "Failed to create vertex shader module", 1);
             }
             VkShaderModuleCreateInfo createFSInfo{};
             createFSInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-            createFSInfo.codeSize = spvFragmentShaderCode.size();
+            createFSInfo.codeSize = 4*spvFragmentShaderCode.size();
             createFSInfo.pCode = spvFragmentShaderCode.data();
+            std::cout<<"size spirv fragment shader code : "<<spvFragmentShaderCode.size()<<std::endl;
             if (vkCreateShaderModule(vkSettup->getDevice(), &createFSInfo, nullptr, &fragmentShaderModule) != VK_SUCCESS) {
                 throw core::Erreur (0, "Failed to create fragment shader module", 1);
             }
@@ -615,7 +617,7 @@ namespace odfaeg {
 
                     // Get parameter location and assign it new values
                     GLint location = getParamLocation(name);
-                    if (location != -1) {                        
+                    if (location != -1) {
                         glCheck(glUniformMatrix4fvARB(location, 1, GL_FALSE, matrix.toGlMatrix().data()));
                     }
                     // Disable program
@@ -830,7 +832,7 @@ namespace odfaeg {
                     std::vector<char> log;
                     log.resize(infoLogLength);
                     glCheck(glGetShaderInfoLog(computeShaderID, infoLogLength, 0, &log[0]));
-                    std::cerr << "Failed to compile compute shader:" << std::endl                    
+                    std::cerr << "Failed to compile compute shader:" << std::endl
                     << std::string (log.begin(), log.end()) << std::endl;
                     glCheck(glDeleteShader(computeShaderID));
                     glCheck(glDeleteProgram(m_shaderProgram));

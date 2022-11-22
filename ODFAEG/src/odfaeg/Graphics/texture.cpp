@@ -61,8 +61,11 @@ namespace
 
 namespace odfaeg {
     namespace graphic {
-        unsigned int Texture::nbTextures = 0;
+
         #ifdef VULKAN
+        bool Texture::loadFromFile(const std::string& filename, const sf::IntRect& area){
+            return false;
+        }
         bool Texture::loadFromImage(const sf::Image& image, const sf::IntRect& area) {
         }
         bool Texture::create(unsigned int width, unsigned int height) {
@@ -73,13 +76,41 @@ namespace odfaeg {
         }
         void Texture::update(const Texture& texture) {
         }
+        void Texture::update(const Texture& texture, unsigned int x, unsigned int y) {
+        }
         void Texture::setSmooth(bool smooth) {
         }
         void Texture::swap(Texture& texture) {
         }
         unsigned int Texture::getMaximumSize() {
         }
+        bool Texture::createCubeMap (unsigned int width, unsigned int height) {
+        }
+        bool Texture::isSmooth() const {
+            return false;
+        }
+        void Texture::setRepeated(bool repeated) {
+        }
+        bool Texture::isRepeated() const {
+            return false;
+        }
+        bool isCubemap() {
+            return false;
+        }
+        unsigned int Texture::getNativeHandle() {
+            return m_texture;
+        }
+        unsigned int Texture::getId() const {
+            return id;
+        }
+        void Texture::setNativeHandle(unsigned int handle, unsigned int width, unsigned int height) {
+            m_texture = handle;
+            m_actualSize.x = width;
+            m_actualSize.y = height;
+        }
+
         #else // VULKAN
+        unsigned int Texture::nbTextures = 0;
         std::vector<Texture*> Texture::allTextures = std::vector<Texture*>();
         ////////////////////////////////////////////////////////////
         Texture::Texture() :

@@ -1,20 +1,23 @@
 #include "../../../../include/odfaeg/Window/GLFW/vkGLFWWindow.hpp"
 #ifdef VULKAN
+
 namespace odfaeg {
     namespace window {
-        VKGLFWWindow::VKGLFWWindow() : sf::Window() {
+        VKGLFWWindow* VKGLFWWindow::currentGLFWWindow = nullptr;
+        VKGLFWWindow::VKGLFWWindow() {
             m_settings = ContextSettings(0, 0, 0, 0, 0);
         }
-        VKGLFWWindow::VKGLFWWindow(sf::VideoMode mode, const sf::String& title, sf::Uint32 style, const ContextSettings& settings) :
-        sf::Window (mode, title, style, sf::ContextSettings(settings.depthBits, settings.stencilBits, settings.antiAliasingLevel, settings.versionMajor, settings.versionMinor)) {
+        VKGLFWWindow::VKGLFWWindow(sf::VideoMode mode, const sf::String& title, sf::Uint32 style, const ContextSettings& settings)  {
             m_settings = ContextSettings(settings.depthBits, settings.stencilBits, settings.antiAliasingLevel, settings.versionMajor, settings.versionMinor);
         }
         void VKGLFWWindow::create(sf::VideoMode mode, const sf::String& title, sf::Uint32 style, const ContextSettings& settings) {
             m_settings = ContextSettings(settings.depthBits, settings.stencilBits, settings.antiAliasingLevel, settings.versionMajor, settings.versionMinor);
-            gflwInit();
+            glfwInit();
             glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
             glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
             window = glfwCreateWindow(mode.width, mode.height, title.toAnsiString().c_str(), nullptr, nullptr);
+            vkSettup.setCreateSurface(true, window);
+            vkSettup.initVulkan();
             opened = true;
         }
         void VKGLFWWindow::create (sf::WindowHandle handle, const ContextSettings& settings) {
@@ -24,9 +27,9 @@ namespace odfaeg {
         }
         bool VKGLFWWindow::pollEvent (IEvent& event) {
             currentGLFWWindow = this;
-            if (event.empty()) {
+            if (events.empty()) {
                 glfwPollEvents();
-                if (glfwWindowShouldClose()) {
+                if (glfwWindowShouldClose(window)) {
                     IEvent closeEvent;
                     closeEvent.type = IEvent::WINDOW_EVENT;
                     closeEvent.window.type = IEvent::WINDOW_EVENT_CLOSED;
@@ -34,7 +37,7 @@ namespace odfaeg {
                 }
             }
             event = events.front();
-            event.pop();
+            events.pop();
         }
         bool VKGLFWWindow::waitEvent (IEvent& event) {
         }
@@ -80,16 +83,20 @@ namespace odfaeg {
 
             glfwTerminate();
         }
-        bool VKGLFWWindow::setActive(bool active=true) {
+        bool VKGLFWWindow::setActive(bool active) {
 
         }
         void VKGLFWWindow::setVerticalSyncEnabled(bool enabled) {
         }
         void VKGLFWWindow::display() {
-
+            vkSettup.drawFrame();
+            vkDeviceWaitIdle(vkSettup.getDevice());
         }
         const ContextSettings& VKGLFWWindow::getSettings() const {
             return m_settings;
+        }
+        VkSettup& VKGLFWWindow::getVkSettup() {
+            return vkSettup;
         }
     }
 }

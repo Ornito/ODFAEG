@@ -1,7 +1,8 @@
 #ifndef ODFAEG_APPLICATION_HPP
 #define ODFAEG_APPLICATION_HPP
-
+#ifndef VULKAN
 #include "GL/glew.h"
+#endif
 #include "GLFW/glfw3.h"
 #include "../Network/network.h"
 #include "renderWindow.h"

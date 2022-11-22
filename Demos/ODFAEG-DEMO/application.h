@@ -2,6 +2,7 @@
 // *** END ***
 #ifndef MY_APPLI
 #define MY_APPLI
+#ifdef COMPILE
 #include "odfaeg/Graphics/perPixelLinkedListRenderComponent.hpp"
 #include "odfaeg/Graphics/shadowRenderComponent.hpp"
 #include "odfaeg/Graphics/lightRenderComponent.hpp"
@@ -75,3 +76,4 @@ namespace sorrok {
     };
 }
 #endif // MY_APPLI
+#endif
