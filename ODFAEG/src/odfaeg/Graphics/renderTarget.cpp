@@ -60,30 +60,49 @@ namespace odfaeg {
             vkDestroyRenderPass(vkSettup->getDevice(), renderPass, nullptr);
         }
         void RenderTarget::initialize(window::VkSettup& settup) {
-            std::cout<<"initialize"<<std::endl;
             vkSettup = &settup;
+
             m_defaultView = View (static_cast<float>(getSize().x), static_cast<float>(getSize().y), -static_cast<float>(getSize().y) - 200, static_cast<float>(getSize().y)+200);
             m_defaultView.reset(physic::BoundingBox(0, 0, -static_cast<float>(getSize().y) - 200,static_cast<float>(getSize().x), static_cast<float>(getSize().y),static_cast<float>(getSize().y)+200));
             m_view = m_defaultView;
             const std::string defaultVertexShader = R"(#version 450
-                                                        vec2 positions[3] = vec2[](
-                                                            vec2(0.0, -0.5),
-                                                            vec2(0.5, 0.5),
-                                                            vec2(-0.5, 0.5)
-                                                        );
+                                                        layout(binding = 0) uniform UniformBufferObject {
+                                                            mat4 model;
+                                                            mat4 view;
+                                                            mat4 proj;
+                                                        } ubo;
+                                                        layout(location = 0) in vec3 inPosition;
+                                                        layout(location = 1) in vec4 inColor;
+
+                                                        layout(location = 0) out vec4 fragColor;
+
+                                                        out gl_PerVertex {
+                                                            vec4 gl_Position;
+                                                        };
+
                                                         void main() {
-                                                            gl_Position = vec4(positions[gl_VertexIndex], 0.0, 1.0);
-                                                        })";
+                                                            gl_Position = ubo.proj * ubo.view * ubo.model * vec4(inPosition, 1.0);
+                                                            fragColor = inColor;
+                                                        }
+                                                        )";
             const std::string defaultFragmentShader = R"(#version 450
                                                           #extension GL_ARB_separate_shader_objects : enable
+                                                          layout (location = 0) in vec4 fragColor;
                                                           layout(location = 0) out vec4 outColor;
                                                           void main() {
-                                                              outColor = vec4(1.0, 0.0, 0.0, 1.0);
+                                                              outColor = fragColor;
                                                           })";
              defaultShader.setVkSettup(vkSettup);
              if (!defaultShader.loadFromMemory(defaultVertexShader, defaultFragmentShader)) {
                   throw core::Erreur (0, "Failed to load default shader", 1);
              }
+             createRenderPass();
+             createDescriptorSetLayout();
+             createCommandPool();
+             createUniformBuffers();
+             createDescriptorPool();
+             createDescriptorSets();
+
         }
         void RenderTarget::clear(const sf::Color& color) {
             cleanup();
@@ -143,7 +162,16 @@ namespace odfaeg {
                       RenderStates states) {
 
              createGraphicPipeline(vertices, vertexCount, type, states);
-             createCommandPool();
+
+             vertexBuffer.setVkSettup(*vkSettup);
+             vertexBuffer.clear();
+             for (unsigned int i = 0; i < vertexCount; i++) {
+                vertexBuffer.append(vertices[i]);
+             }
+             UniformBufferObject ubo;
+             ubo.model = states.transform.getMatrix().transpose();
+
+             updateUniformBuffer(vkSettup->getCurrentFrame(), ubo);
              createCommandBuffers();
         }
         void RenderTarget::createRenderPass() {
@@ -186,6 +214,65 @@ namespace odfaeg {
             }
 
         }
+        void RenderTarget::createDescriptorSetLayout() {
+            VkDescriptorSetLayoutBinding uboLayoutBinding{};
+            uboLayoutBinding.binding = 0;
+            uboLayoutBinding.descriptorCount = 1;
+            uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            uboLayoutBinding.pImmutableSamplers = nullptr;
+            uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+            VkDescriptorSetLayoutCreateInfo layoutInfo{};
+            layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+            layoutInfo.bindingCount = 1;
+            layoutInfo.pBindings = &uboLayoutBinding;
+
+            if (vkCreateDescriptorSetLayout(vkSettup->getDevice(), &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS) {
+                throw std::runtime_error("failed to create descriptor set layout!");
+            }
+        }
+        void RenderTarget::createDescriptorPool() {
+            VkDescriptorPoolSize poolSize{};
+            poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            poolSize.descriptorCount = static_cast<uint32_t>(vkSettup->MAX_FRAMES_IN_FLIGHT);
+            VkDescriptorPoolCreateInfo poolInfo{};
+            poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+            poolInfo.poolSizeCount = 1;
+            poolInfo.pPoolSizes = &poolSize;
+            poolInfo.maxSets = static_cast<uint32_t>(vkSettup->MAX_FRAMES_IN_FLIGHT);
+            if (vkCreateDescriptorPool(vkSettup->getDevice(), &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS) {
+                throw std::runtime_error("echec de la creation de la pool de descripteurs!");
+            }
+        }
+        void RenderTarget::createDescriptorSets() {
+            std::vector<VkDescriptorSetLayout> layouts(vkSettup->MAX_FRAMES_IN_FLIGHT, descriptorSetLayout);
+            VkDescriptorSetAllocateInfo allocInfo{};
+            allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+            allocInfo.descriptorPool = descriptorPool;
+            allocInfo.descriptorSetCount = static_cast<uint32_t>(vkSettup->MAX_FRAMES_IN_FLIGHT);
+            allocInfo.pSetLayouts = layouts.data();
+            descriptorSets.resize(vkSettup->MAX_FRAMES_IN_FLIGHT);
+            if (vkAllocateDescriptorSets(vkSettup->getDevice(), &allocInfo, descriptorSets.data()) != VK_SUCCESS) {
+                throw std::runtime_error("echec de l'allocation d'un set de descripteurs!");
+            }
+            for (size_t i = 0; i < vkSettup->MAX_FRAMES_IN_FLIGHT; i++) {
+                VkDescriptorBufferInfo bufferInfo{};
+                bufferInfo.buffer = uniformBuffers[i];
+                bufferInfo.offset = 0;
+                bufferInfo.range = sizeof(UniformBufferObject);
+                VkWriteDescriptorSet descriptorWrite{};
+                descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                descriptorWrite.dstSet = descriptorSets[i];
+                descriptorWrite.dstBinding = 0;
+                descriptorWrite.dstArrayElement = 0;
+                descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                descriptorWrite.descriptorCount = 1;
+                descriptorWrite.pBufferInfo = &bufferInfo;
+                descriptorWrite.pImageInfo = nullptr; // Optionnel
+                descriptorWrite.pTexelBufferView = nullptr; // Optionnel
+                vkUpdateDescriptorSets(vkSettup->getDevice(), 1, &descriptorWrite, 0, nullptr);
+            }
+        }
         void RenderTarget::createGraphicPipeline(const Vertex* vertices, unsigned int vertexCount, sf::PrimitiveType type,
                       RenderStates states = RenderStates::Default) {
             defaultShader.createShaderModules();
@@ -206,9 +293,14 @@ namespace odfaeg {
             VkPipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
 
             VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
+            auto bindingDescription = Vertex::getBindingDescription();
+            auto attributeDescriptions = Vertex::getAttributeDescriptions();
             vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-            vertexInputInfo.vertexBindingDescriptionCount = 0;
-            vertexInputInfo.vertexAttributeDescriptionCount = 0;
+            vertexInputInfo.vertexBindingDescriptionCount = 1;
+            vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
+            vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
+            vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
+
 
             VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
             inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -266,8 +358,8 @@ namespace odfaeg {
 
             VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
             pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-            pipelineLayoutInfo.setLayoutCount = 0;
-            pipelineLayoutInfo.pushConstantRangeCount = 0;
+            pipelineLayoutInfo.setLayoutCount = 1;
+            pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
 
             if (vkCreatePipelineLayout(vkSettup->getDevice(), &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
                 throw core::Erreur(0, "failed to create pipeline layout!", 1);
@@ -302,6 +394,62 @@ namespace odfaeg {
             if (vkCreateCommandPool(vkSettup->getDevice(), &poolInfo, nullptr, &commandPool) != VK_SUCCESS) {
                 throw core::Erreur(0, "échec de la création d'une command pool!", 1);
             }
+            vkSettup->setCommandPool(commandPool);
+        }
+        void RenderTarget::createUniformBuffers() {
+            VkDeviceSize bufferSize = sizeof(UniformBufferObject);
+
+            uniformBuffers.resize(vkSettup->MAX_FRAMES_IN_FLIGHT);
+            uniformBuffersMemory.resize(vkSettup->MAX_FRAMES_IN_FLIGHT);
+
+            for (size_t i = 0; i < vkSettup->MAX_FRAMES_IN_FLIGHT; i++) {
+                createBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, uniformBuffers[i], uniformBuffersMemory[i]);
+            }
+        }
+        void RenderTarget::updateUniformBuffer(uint32_t currentImage, UniformBufferObject ubo) {
+            ubo.proj = m_view.getProjMatrix().getMatrix().transpose();
+            ubo.proj.m22 *= -1;
+            ubo.view = m_view.getViewMatrix().getMatrix().transpose();
+            void* data;
+            vkMapMemory(vkSettup->getDevice(), uniformBuffersMemory[currentImage], 0, sizeof(ubo), 0, &data);
+                memcpy(data, &ubo, sizeof(ubo));
+            vkUnmapMemory(vkSettup->getDevice(), uniformBuffersMemory[currentImage]);
+
+        }
+        void RenderTarget::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory) {
+            VkBufferCreateInfo bufferInfo{};
+            bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+            bufferInfo.size = size;
+            bufferInfo.usage = usage;
+            bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+            if (vkCreateBuffer(vkSettup->getDevice(), &bufferInfo, nullptr, &buffer) != VK_SUCCESS) {
+                throw std::runtime_error("failed to create buffer!");
+            }
+
+            VkMemoryRequirements memRequirements;
+            vkGetBufferMemoryRequirements(vkSettup->getDevice(), buffer, &memRequirements);
+
+            VkMemoryAllocateInfo allocInfo{};
+            allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+            allocInfo.allocationSize = memRequirements.size;
+            allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
+
+            if (vkAllocateMemory(vkSettup->getDevice(), &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS) {
+                throw std::runtime_error("failed to allocate buffer memory!");
+            }
+
+            vkBindBufferMemory(vkSettup->getDevice(), buffer, bufferMemory, 0);
+        }
+        uint32_t RenderTarget::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
+            VkPhysicalDeviceMemoryProperties memProperties;
+            vkGetPhysicalDeviceMemoryProperties(vkSettup->getPhysicalDevice(), &memProperties);
+            for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
+                if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
+                    return i;
+                }
+            }
+            throw std::runtime_error("aucun type de memoire ne satisfait le buffer!");
         }
         void RenderTarget::createCommandBuffers() {
             commandBuffers.resize(swapChainFramebuffers.size());
@@ -323,7 +471,6 @@ namespace odfaeg {
                 if (vkBeginCommandBuffer(commandBuffers[i], &beginInfo) != VK_SUCCESS) {
                     throw core::Erreur(0, "failed to begin recording command buffer!", 1);
                 }
-
                 VkRenderPassBeginInfo renderPassInfo{};
                 renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
                 renderPassInfo.renderPass = renderPass;
@@ -336,10 +483,22 @@ namespace odfaeg {
                 renderPassInfo.pClearValues = &clrColor;
 
                 vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+                vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
+                VkBuffer vertexBuffers[] = {vertexBuffer.getVertexBuffer()};
+                VkDeviceSize offsets[] = {0};
+                vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);
+                vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[vkSettup->getCurrentFrame()], 0, nullptr);
+                if(vertexBuffer.getIndicesSize() > 0) {
+                    vkCmdBindIndexBuffer(commandBuffers[i], vertexBuffer.getIndexBuffer(), 0, VK_INDEX_TYPE_UINT16);
+                }
+                if(vertexBuffer.getIndicesSize() > 0) {
+                    vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(vertexBuffer.getIndicesSize()), 1, 0, 0, 0);
+                } else {
+                    vkCmdDraw(commandBuffers[i], static_cast<uint32_t>(vertexBuffer.getSize()), 1, 0, 0);
+                }
+                vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
 
-                    vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
-
-                    vkCmdDraw(commandBuffers[i], 3, 1, 0, 0);
+                vkCmdDraw(commandBuffers[i], 3, 1, 0, 0);
 
                 vkCmdEndRenderPass(commandBuffers[i]);
 
@@ -351,10 +510,17 @@ namespace odfaeg {
             vkSettup->setCommandBuffers(commandBuffers);
         }
         void RenderTarget::cleanup() {
-            std::cout<<"clean up"<<std::endl;
             vkDestroyCommandPool(vkSettup->getDevice(), commandPool, nullptr);
             vkDestroyPipeline(vkSettup->getDevice(), graphicsPipeline, nullptr);
             vkDestroyPipelineLayout(vkSettup->getDevice(), pipelineLayout, nullptr);
+            vkDestroyRenderPass(vkSettup->getDevice(), renderPass, nullptr);
+            vkDestroyDescriptorSetLayout(vkSettup->getDevice(), descriptorSetLayout, nullptr);
+            for (size_t i = 0; i < vkSettup->getSwapchainImages().size(); i++) {
+                vkDestroyBuffer(vkSettup->getDevice(), uniformBuffers[i], nullptr);
+                vkFreeMemory(vkSettup->getDevice(), uniformBuffersMemory[i], nullptr);
+            }
+             vkDestroyDescriptorPool(vkSettup->getDevice(), descriptorPool, nullptr);
+             vkDestroyDescriptorSetLayout(vkSettup->getDevice(), descriptorSetLayout, nullptr);
         }
         #else
         ////////////////////////////////////////////////////////////

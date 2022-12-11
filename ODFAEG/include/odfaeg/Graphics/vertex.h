@@ -31,6 +31,11 @@
 #include "../Math/vec4.h"
 #include "../Math/vec2f.h"
 #include "export.hpp"
+#include "../config.hpp"
+#ifdef VULKAN
+#include <vulkan/vulkan.hpp>
+#include <array>
+#endif
 namespace odfaeg {
     namespace graphic {
         ////////////////////////////////////////////////////////////
@@ -127,6 +132,28 @@ namespace odfaeg {
             sf::Vector3f position; ///< 3D position of the vertex
             sf::Color color; ///< Color of the vertex
             sf::Vector2f texCoords; ///< Coordinates of the texture's pixel to map to the vertex
+            #ifdef VULKAN
+            static VkVertexInputBindingDescription getBindingDescription() {
+                VkVertexInputBindingDescription bindingDescription{};
+                bindingDescription.binding = 0;
+                bindingDescription.stride = sizeof(Vertex);
+                bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+                return bindingDescription;
+            }
+            static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions() {
+                std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions{};
+                attributeDescriptions[0].binding = 0;
+                attributeDescriptions[0].location = 0;
+                attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
+                attributeDescriptions[0].offset = offsetof(Vertex, position);
+
+                attributeDescriptions[1].binding = 0;
+                attributeDescriptions[1].location = 1;
+                attributeDescriptions[1].format = VK_FORMAT_R8G8B8A8_UNORM;
+                attributeDescriptions[1].offset = offsetof(Vertex, color);
+                return attributeDescriptions;
+            }
+            #endif
         };
     }
 }

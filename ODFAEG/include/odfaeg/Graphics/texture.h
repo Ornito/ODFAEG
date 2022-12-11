@@ -36,8 +36,10 @@
 #include "../Math/matrix4.h"
 #include <SFML/Graphics/Image.hpp>
 #ifndef VULKAN
-#include "../Window/vkSettup.hpp"
 #include "../../../include/odfaeg/Window/iGlResource.hpp"
+#else
+#include "../Window/vkSettup.hpp"
+#include <vulkan/vulkan.hpp>
 #endif
 
 namespace sf {
@@ -56,6 +58,7 @@ namespace odfaeg
         #ifdef VULKAN
         class Texture {
             public :
+            void setVkSettup (window::VkSettup* vkSettup);
             bool loadFromImage(const sf::Image& image, const sf::IntRect& area = sf::IntRect());
             bool loadFromFile(const std::string& filename, const sf::IntRect& area = sf::IntRect());
             bool create(unsigned int width, unsigned int height);
@@ -74,7 +77,19 @@ namespace odfaeg
             unsigned int getNativeHandle();
             unsigned int getId() const;
             void setNativeHandle(unsigned int handle, unsigned int width, unsigned int height);
+            ~Texture();
         private :
+            VkCommandBuffer beginSingleTimeCommands();
+            void endSingleTimeCommands(VkCommandBuffer commandBuffer);
+            void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+            void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
+            void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
+            void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
+            void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
+            uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+            window::VkSettup* vkSettup;
+            VkBuffer stagingBuffer;
+            VkDeviceMemory stagingBufferMemory;
             friend class Text;
             friend class RenderTexture;
             friend class RenderTarget;
@@ -86,6 +101,8 @@ namespace odfaeg
             sf::Vector2u m_size;          ///< Public texture size
             sf::Vector2u m_actualSize;    ///< Actual texture size (can be greater than public size because of padding)
             unsigned int id;
+            VkImage textureImage;
+            VkDeviceMemory textureImageMemory;
 
         };
         #else

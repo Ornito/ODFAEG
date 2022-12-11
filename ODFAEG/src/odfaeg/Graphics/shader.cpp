@@ -185,7 +185,6 @@ namespace odfaeg {
             createVSInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
             createVSInfo.codeSize = 4*spvVertexShaderCode.size();
             createVSInfo.pCode = spvVertexShaderCode.data();
-            std::cout<<"size spirv verrex shader code : "<<spvVertexShaderCode.size()<<std::endl;
             if (vkCreateShaderModule(vkSettup->getDevice(), &createVSInfo, nullptr, &vertexShaderModule) != VK_SUCCESS) {
                 throw core::Erreur (0, "Failed to create vertex shader module", 1);
             }
@@ -193,7 +192,6 @@ namespace odfaeg {
             createFSInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
             createFSInfo.codeSize = 4*spvFragmentShaderCode.size();
             createFSInfo.pCode = spvFragmentShaderCode.data();
-            std::cout<<"size spirv fragment shader code : "<<spvFragmentShaderCode.size()<<std::endl;
             if (vkCreateShaderModule(vkSettup->getDevice(), &createFSInfo, nullptr, &fragmentShaderModule) != VK_SUCCESS) {
                 throw core::Erreur (0, "Failed to create fragment shader module", 1);
             }

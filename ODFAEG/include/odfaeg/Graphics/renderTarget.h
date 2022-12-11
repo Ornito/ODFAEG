@@ -201,6 +201,7 @@ namespace odfaeg {
             ////////////////////////////////////////////////////////////
             virtual sf::Vector2u getSize() const = 0;
             void cleanup();
+
         protected :
             RenderTarget ();
             void initialize(window::VkSettup& settup);
@@ -209,6 +210,18 @@ namespace odfaeg {
             window::VkSettup* vkSettup;
             void createRenderPass();
         private :
+            void createDescriptorSetLayout();
+            void createDescriptorPool();
+            void createDescriptorSets();
+            void createUniformBuffers();
+            void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
+            uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+            struct UniformBufferObject {
+                alignas(16) math::Matrix4f model;
+                alignas(16) math::Matrix4f view;
+                alignas(16) math::Matrix4f proj;
+            };
+            void updateUniformBuffer(uint32_t imageIndex, UniformBufferObject ubo);
             void createGraphicPipeline(const Vertex* vertices, unsigned int vertexCount, sf::PrimitiveType type,
                       RenderStates states);
             void createCommandPool();
@@ -217,10 +230,16 @@ namespace odfaeg {
             View        m_view;  ///< Current view
             sf::Color clearColor;
             Shader defaultShader;
+            VkDescriptorSetLayout descriptorSetLayout;
             VkPipelineLayout pipelineLayout;
             VkPipeline graphicsPipeline;
             VkCommandPool commandPool;
             std::vector<VkCommandBuffer> commandBuffers;
+            VertexBuffer vertexBuffer;
+            std::vector<VkBuffer> uniformBuffers;
+            std::vector<VkDeviceMemory> uniformBuffersMemory;
+            VkDescriptorPool descriptorPool;
+            std::vector<VkDescriptorSet> descriptorSets;
         };
         #else
         ////////////////////////////////////////////////////////////

@@ -11,6 +11,9 @@
 #include "drawable.h"
 #include <vector>
 #include "../config.hpp"
+#ifdef VULKAN
+#include "../Window/vkSettup.hpp"
+#endif
 #include "../Physics/boundingBox.h"
 
 #include "../../../include/odfaeg/Window/iGlResource.hpp"
@@ -22,6 +25,35 @@
   */
 namespace odfaeg {
     namespace graphic {
+        #ifdef VULKAN
+        class RenderTarget;
+        class VertexBuffer {
+        public :
+            VertexBuffer();
+            void setVkSettup(window::VkSettup& vkSettup);
+            void append(const Vertex& vertex);
+            void addIndex(uint16_t index);
+            size_t getIndicesSize();
+
+            void clear();
+            VkBuffer getVertexBuffer();
+            VkBuffer getIndexBuffer();
+            size_t getSize();
+            ~VertexBuffer();
+        private :
+            void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
+            void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+            void createIndexBuffer();
+            uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+            std::vector<Vertex> m_vertices;
+            window::VkSettup* vkSettup;
+            VkBuffer vertexBuffer;
+            VkDeviceMemory vertexBufferMemory;
+            VkBuffer indexBuffer;
+            VkDeviceMemory indexBufferMemory;
+            std::vector<uint16_t> indices;
+        };
+        #else
         ////////////////////////////////////////////////////////////
         /// \brief Define a set of one or more 2D primitives
         ///
@@ -213,7 +245,7 @@ namespace odfaeg {
             bool loop;
             Entity* m_entity;
         };
-
+        #endif
     }
 } // namespace sf
 

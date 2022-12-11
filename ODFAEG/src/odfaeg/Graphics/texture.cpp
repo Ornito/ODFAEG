@@ -39,6 +39,7 @@
 #include <cassert>
 #include <cstring>
 #include <iostream>
+
 using namespace sf;
 
 namespace
@@ -63,16 +64,177 @@ namespace odfaeg {
     namespace graphic {
 
         #ifdef VULKAN
-        bool Texture::loadFromFile(const std::string& filename, const sf::IntRect& area){
-            return false;
+        void Texture::setVkSettup(window::VkSettup* settup) {
+            vkSettup = settup;
+        }
+        bool Texture::loadFromFile(const std::string& filename, const sf::IntRect& area) {
+            Image image;
+            return image.loadFromFile(filename) && loadFromImage(image, area);
         }
         bool Texture::loadFromImage(const sf::Image& image, const sf::IntRect& area) {
+            const sf::Uint8* pixels = image.getPixelsPtr();
+            int texWidth = image.getSize().x;
+            int texHeight = image.getSize().y;
+            update(pixels, texWidth, texHeight, 0, 0);
+
+        }
+        void Texture::update(const sf::Uint8* pixels, unsigned int texWidth, unsigned int texHeight, unsigned int x, unsigned int y) {
+            VkDeviceSize imageSize = texWidth * texHeight * 4;
+            if (!pixels) {
+                throw std::runtime_error("échec du chargement d'une image!");
+            }
+            createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+            void* data;
+            vkMapMemory(vkSettup->getDevice(), stagingBufferMemory, 0, imageSize, 0, &data);
+                memcpy(data, pixels, static_cast<size_t>(imageSize));
+            vkUnmapMemory(vkSettup->getDevice(), stagingBufferMemory);
+            createImage(texWidth, texHeight, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory);
+            transitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+            copyBufferToImage(stagingBuffer, textureImage, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
+            transitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+            vkDestroyBuffer(vkSettup->getDevice(), stagingBuffer, nullptr);
+            vkFreeMemory(vkSettup->getDevice(), stagingBufferMemory, nullptr);
+        }
+        void Texture::createImage(uint32_t texWidth, uint32_t texHeight, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory) {
+            VkImageCreateInfo imageInfo{};
+            imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+            imageInfo.imageType = VK_IMAGE_TYPE_2D;
+            imageInfo.extent.width = static_cast<uint32_t>(texWidth);
+            imageInfo.extent.height = static_cast<uint32_t>(texHeight);
+            imageInfo.extent.depth = 1;
+            imageInfo.mipLevels = 1;
+            imageInfo.arrayLayers = 1;
+            imageInfo.format = VK_FORMAT_R8G8B8A8_SRGB;
+            imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+            imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+            imageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+            imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+            imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+            imageInfo.flags = 0; // Optionnel
+            if (vkCreateImage(vkSettup->getDevice(), &imageInfo, nullptr, &textureImage) != VK_SUCCESS) {
+                throw std::runtime_error("echec de la creation d'une image!");
+            }
+            VkMemoryRequirements memRequirements;
+            vkGetImageMemoryRequirements(vkSettup->getDevice(), image, &memRequirements);
+
+            VkMemoryAllocateInfo allocInfo{};
+            allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+            allocInfo.allocationSize = memRequirements.size;
+            allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
+
+            if (vkAllocateMemory(vkSettup->getDevice(), &allocInfo, nullptr, &imageMemory) != VK_SUCCESS) {
+                throw std::runtime_error("echec de l'allocation de la memoire d'une image!");
+            }
+
+            vkBindImageMemory(vkSettup->getDevice(), image, imageMemory, 0);
+        }
+        void Texture::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory) {
+            VkBufferCreateInfo bufferInfo{};
+            bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+            bufferInfo.size = size;
+            bufferInfo.usage = usage;
+            bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+            if (vkCreateBuffer(vkSettup->getDevice(), &bufferInfo, nullptr, &buffer) != VK_SUCCESS) {
+                throw std::runtime_error("failed to create buffer!");
+            }
+
+            VkMemoryRequirements memRequirements;
+            vkGetBufferMemoryRequirements(vkSettup->getDevice(), buffer, &memRequirements);
+
+            VkMemoryAllocateInfo allocInfo{};
+            allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+            allocInfo.allocationSize = memRequirements.size;
+            allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
+
+            if (vkAllocateMemory(vkSettup->getDevice(), &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS) {
+                throw std::runtime_error("failed to allocate buffer memory!");
+            }
+
+            vkBindBufferMemory(vkSettup->getDevice(), buffer, bufferMemory, 0);
+        }
+        uint32_t Texture::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
+            VkPhysicalDeviceMemoryProperties memProperties;
+            vkGetPhysicalDeviceMemoryProperties(vkSettup->getPhysicalDevice(), &memProperties);
+            for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
+                if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
+                    return i;
+                }
+            }
+            throw std::runtime_error("aucun type de memoire ne satisfait le buffer!");
+        }
+        VkCommandBuffer Texture::beginSingleTimeCommands() {
+            VkCommandBufferAllocateInfo allocInfo{};
+            allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+            allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+            allocInfo.commandPool = vkSettup->getCommandPool();
+            allocInfo.commandBufferCount = 1;
+
+            VkCommandBuffer commandBuffer;
+            vkAllocateCommandBuffers(vkSettup->getDevice(), &allocInfo, &commandBuffer);
+
+            VkCommandBufferBeginInfo beginInfo{};
+            beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+            beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+            vkBeginCommandBuffer(commandBuffer, &beginInfo);
+
+            return commandBuffer;
+        }
+
+        void Texture::endSingleTimeCommands(VkCommandBuffer commandBuffer) {
+            vkEndCommandBuffer(commandBuffer);
+
+            VkSubmitInfo submitInfo{};
+            submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+            submitInfo.commandBufferCount = 1;
+            submitInfo.pCommandBuffers = &commandBuffer;
+
+            vkQueueSubmit(vkSettup->getGraphicQueue(), 1, &submitInfo, VK_NULL_HANDLE);
+            vkQueueWaitIdle(vkSettup->getGraphicQueue());
+
+            vkFreeCommandBuffers(vkSettup->getDevice(), vkSettup->getCommandPool(), 1, &commandBuffer);
+        }
+        void Texture::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
+            VkCommandBuffer commandBuffer = beginSingleTimeCommands();
+
+            VkBufferCopy copyRegion{};
+            copyRegion.size = size;
+            vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+
+            endSingleTimeCommands(commandBuffer);
+        }
+        void Texture::transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout) {
+            VkCommandBuffer commandBuffer = beginSingleTimeCommands();
+
+            endSingleTimeCommands(commandBuffer);
+        }
+        void Texture::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height) {
+            VkCommandBuffer commandBuffer = beginSingleTimeCommands();
+
+            VkBufferImageCopy region{};
+            region.bufferOffset = 0;
+            region.bufferRowLength = 0;
+            region.bufferImageHeight = 0;
+            region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+            region.imageSubresource.mipLevel = 0;
+            region.imageSubresource.baseArrayLayer = 0;
+            region.imageSubresource.layerCount = 1;
+            region.imageOffset = {0, 0, 0};
+            region.imageExtent = {
+                width,
+                height,
+                1
+            };
+
+            vkCmdCopyBufferToImage(commandBuffer, buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+
+            endSingleTimeCommands(commandBuffer);
         }
         bool Texture::create(unsigned int width, unsigned int height) {
         }
         sf::Vector2u Texture::getSize() const {
-        }
-        void Texture::update(const sf::Uint8* pixels, unsigned int width, unsigned int height, unsigned int x, unsigned int y) {
         }
         void Texture::update(const Texture& texture) {
         }
@@ -108,7 +270,10 @@ namespace odfaeg {
             m_actualSize.x = width;
             m_actualSize.y = height;
         }
-
+        Texture::~Texture() {
+            vkDestroyImage(vkSettup->getDevice(), textureImage, nullptr);
+            vkFreeMemory(vkSettup->getDevice(), textureImageMemory, nullptr);
+        }
         #else // VULKAN
         unsigned int Texture::nbTextures = 0;
         std::vector<Texture*> Texture::allTextures = std::vector<Texture*>();

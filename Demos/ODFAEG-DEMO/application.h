@@ -2,7 +2,7 @@
 // *** END ***
 #ifndef MY_APPLI
 #define MY_APPLI
-#ifdef COMPILE
+
 #include "odfaeg/Graphics/perPixelLinkedListRenderComponent.hpp"
 #include "odfaeg/Graphics/shadowRenderComponent.hpp"
 #include "odfaeg/Graphics/lightRenderComponent.hpp"
@@ -34,6 +34,7 @@
 #include "odfaeg/Window/iKeyboard.hpp"
 #include "odfaeg/Window/iMouse.hpp"
 #include <fstream>
+#ifdef COMPILE
 namespace sorrok {
     class MyAppli : public odfaeg::core::Application, public odfaeg::graphic::gui::FocusListener {
     private :

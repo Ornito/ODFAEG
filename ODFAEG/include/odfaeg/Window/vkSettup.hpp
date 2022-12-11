@@ -37,13 +37,19 @@ namespace odfaeg {
             VkExtent2D getSwapchainExtends();
             VkDevice getDevice();
             VkFormat getSwapchainImageFormat();
+            std::vector<VkImage>& getSwapchainImages();
             std::vector<VkImageView>& getSwapChainImageViews();
             VkPhysicalDevice getPhysicalDevice();
             QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
             void setCommandBuffers(std::vector<VkCommandBuffer> commandBuffers);
+            void setCommandPool(VkCommandPool commandPool);
+            VkCommandPool getCommandPool();
+            VkQueue getGraphicQueue();
             void drawFrame();
             void cleanup();
+            size_t getCurrentFrame();
             ~VkSettup();
+            const int MAX_FRAMES_IN_FLIGHT = 2;
         private :
             void cleanupSwapchain();
             static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback (VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
@@ -62,6 +68,7 @@ namespace odfaeg {
             void createSwapChain();
             void createImageViews();
             void createSyncObjects();
+            void createCommandPool();
             VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels);
             bool checkDeviceExtensionSupport (VkPhysicalDevice device);
             bool isDeviceSuitable(VkPhysicalDevice device);
@@ -84,11 +91,12 @@ namespace odfaeg {
             VkExtent2D swapChainExtent;
             std::vector<VkImageView> swapChainImageViews;
             std::vector<VkCommandBuffer> commandBuffers;
+            VkCommandPool commandPool;
             std::vector<VkSemaphore> imageAvailableSemaphores;
             std::vector<VkSemaphore> renderFinishedSemaphores;
             std::vector<VkFence> inFlightFences;
             std::vector<VkFence> imagesInFlight;
-            const int MAX_FRAMES_IN_FLIGHT = 2;
+
             size_t currentFrame;
             GLFWwindow* window;
         };

@@ -51,6 +51,9 @@ namespace odfaeg {
         void VKGLFWWindow::setPosition(const sf::Vector2i& position) {
         }
         sf::Vector2u VKGLFWWindow::getSize() const {
+            int width, height;
+            glfwGetWindowSize(window, &width, &height);
+            return sf::Vector2u(width, height);
         }
         void VKGLFWWindow::setSize(const sf::Vector2u& size) {
         }

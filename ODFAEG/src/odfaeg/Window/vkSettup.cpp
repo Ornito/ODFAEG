@@ -246,11 +246,13 @@ namespace odfaeg {
             vkGetDeviceQueue(device, indices.presentFamily, 0, &presentQueue);
         }
         void VkSettup::createSurface() {
+             std::cout<<"create window surface."<<std::endl;
              if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS) {
                 throw core::Erreur(0, "failed to create window surface!", 1);
              }
         }
         void VkSettup::createSwapChain() {
+            std::cout<<"create swap chain"<<std::endl;
             SwapChainSupportDetails swapChainSupport = querySwapChainSupport(physicalDevice);
 
             VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
@@ -440,8 +442,14 @@ namespace odfaeg {
         VkDevice VkSettup::getDevice() {
             return device;
         }
+        size_t VkSettup::getCurrentFrame() {
+            return currentFrame;
+        }
         VkFormat VkSettup::getSwapchainImageFormat() {
             return swapChainImageFormat;
+        }
+        std::vector<VkImage>& VkSettup::getSwapchainImages() {
+            return swapChainImages;
         }
         std::vector<VkImageView>& VkSettup::getSwapChainImageViews() {
             return swapChainImageViews;
@@ -455,6 +463,15 @@ namespace odfaeg {
         void VkSettup::setCommandBuffers(std::vector<VkCommandBuffer> commandBuffers) {
             this->commandBuffers = commandBuffers;
         }
+        void VkSettup::setCommandPool(VkCommandPool commandPool) {
+            this->commandPool = commandPool;
+        }
+        VkCommandPool VkSettup::getCommandPool() {
+            return commandPool;
+        }
+        VkQueue VkSettup::getGraphicQueue() {
+            return graphicsQueue;
+        }
         void VkSettup::drawFrame () {
              if (commandBuffers.size() > 0) {
                  if (mustCreateSurface) {
@@ -467,6 +484,7 @@ namespace odfaeg {
                     }
                      // Marque l'image comme étant à nouveau utilisée par cette frame
                     imagesInFlight[imageIndex] = inFlightFences[currentFrame];
+
                     VkSubmitInfo submitInfo{};
                     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
